@@ -49,10 +49,11 @@ function ensure(eventName, matcher) {
 }
 
 ensure('SessionStart');
-ensure('PostToolUse', 'TodoWrite');
+ensure('PostToolUse', 'TodoWrite|Write|Edit|MultiEdit');
 ensure('PreToolUse', 'Task');
 ensure('SubagentStop');
 ensure('Stop');
+ensure('SessionEnd');
 
 fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
 fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));

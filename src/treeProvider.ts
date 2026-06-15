@@ -1,13 +1,16 @@
 import * as vscode from 'vscode';
 import { TrackerStore } from './store';
-import { buildTree, TreeNode } from './treeModel';
+import { buildTree } from './treeModel';
+import { TreeNode, ViewOptions } from './types';
 
 export class TrackerTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   private changeEmitter = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this.changeEmitter.event;
 
-  constructor(private store: TrackerStore) {
-    store.onChange(() => this.changeEmitter.fire());
+  constructor(private store: TrackerStore, private getOptions: () => ViewOptions) {}
+
+  refresh(): void {
+    this.changeEmitter.fire();
   }
 
   getTreeItem(node: TreeNode): vscode.TreeItem {
@@ -16,7 +19,12 @@ export class TrackerTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       : vscode.TreeItemCollapsibleState.None;
     const item = new vscode.TreeItem(node.label, collapsible);
     item.description = node.description;
-    item.iconPath = new vscode.ThemeIcon(node.icon);
+    if (node.icon) {
+      item.iconPath = new vscode.ThemeIcon(
+        node.icon,
+        node.iconColor ? new vscode.ThemeColor(node.iconColor) : undefined,
+      );
+    }
     if (node.kind === 'feature' && node.resourcePath) {
       item.command = {
         command: 'vscode.open',
@@ -29,7 +37,7 @@ export class TrackerTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
   getChildren(node?: TreeNode): TreeNode[] {
     if (!node) {
-      return buildTree(this.store.state);
+      return buildTree(this.store.state, this.getOptions());
     }
     return node.children ?? [];
   }

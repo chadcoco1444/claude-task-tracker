@@ -2,7 +2,7 @@
   "name": "claude-task-tracker",
   "displayName": "Claude Task Tracker",
   "description": "Visualize Claude Code task progress and subagent convergence.",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "publisher": "local",
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Other"],
@@ -43,6 +43,12 @@
           "default": 30,
           "minimum": 0,
           "description": "Hide a completed feature this many minutes after it finishes (0 = never hide)."
+        },
+        "claudeTaskTracker.logRetentionDays": {
+          "type": "number",
+          "default": 14,
+          "minimum": 0,
+          "description": "Compact the tracker event log on startup, dropping events older than this many days (0 = keep everything)."
         }
       }
     }

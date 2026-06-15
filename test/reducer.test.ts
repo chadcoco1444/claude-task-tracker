@@ -85,12 +85,29 @@ describe('reduce', () => {
     expect(reduce(events).features[0].status).toBe('idle');
   });
 
-  it('a stopped session with no plan and no todos is still done', () => {
+  it('a stopped session with no plan and no todos is idle, not done', () => {
     const events: TrackerEvent[] = [
       { t: 'session_start', ts: 1, session: 's1', cwd: '/a/repo' },
       { t: 'session_stop', ts: 2, session: 's1' },
     ];
-    expect(reduce(events).features[0].status).toBe('done');
+    expect(reduce(events).features[0].status).toBe('idle');
+  });
+
+  it('marks a feature ended when SessionEnd fires (precedence over everything)', () => {
+    const f = reduce([
+      { t: 'todo_update', ts: 1, session: 's1', todos: [{ text: 'x', status: 'in_progress' }] },
+      { t: 'session_end', ts: 2, session: 's1' },
+    ] as TrackerEvent[]).features[0];
+    expect(f.ended).toBe(true);
+    expect(f.status).toBe('ended');
+  });
+
+  it('still derives done when stopped with all todos completed', () => {
+    const f = reduce([
+      { t: 'todo_update', ts: 1, session: 's1', todos: [{ text: 'x', status: 'completed' }] },
+      { t: 'session_stop', ts: 2, session: 's1' },
+    ] as TrackerEvent[]).features[0];
+    expect(f.status).toBe('done');
   });
 
   it('labels feature from cwd carried on a non-session_start event (SessionStart missed)', () => {

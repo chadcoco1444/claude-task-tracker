@@ -1,59 +1,72 @@
-import { Feature, State, TodoStatus } from './types';
+import { Feature, State, TodoStatus, TreeNode, ViewOptions } from './types';
+import { buildGroups, FeatureView } from './viewModel';
 
-export interface TreeNode {
-  kind: 'feature' | 'task' | 'subagent';
-  label: string;
-  description?: string;
-  icon: string;
-  children?: TreeNode[];
-  resourcePath?: string;
+const FEATURE_COLOR: Record<Feature['status'], string> = {
+  done: 'charts.green',
+  active: 'charts.blue',
+  idle: 'disabledForeground',
+};
+
+function featureIcon(status: Feature['status']): { icon: string; iconColor: string } {
+  return { icon: 'rocket', iconColor: FEATURE_COLOR[status] };
 }
 
-function featureIcon(f: Feature): string {
-  if (f.status === 'done') {
-    return 'pass-filled';
-  }
-  if (f.status === 'active') {
-    return 'sync~spin';
-  }
-  return 'circle-outline';
-}
-
-function todoIcon(status: TodoStatus): string {
+function todoVisual(status: TodoStatus): { icon: string; iconColor: string } {
   if (status === 'completed') {
-    return 'check';
+    return { icon: 'check', iconColor: 'charts.green' };
   }
   if (status === 'in_progress') {
-    return 'sync~spin';
+    return { icon: 'sync~spin', iconColor: 'charts.yellow' };
   }
-  return 'circle-outline';
+  return { icon: 'circle-outline', iconColor: 'disabledForeground' };
 }
 
-export function buildTree(state: State): TreeNode[] {
-  return state.features.map((f) => {
-    const useTodos = f.liveTodos.length > 0;
+export function progressBar(done: number, total: number): string {
+  const slots = 4;
+  const filled = total > 0 ? Math.min(slots, Math.round((done / total) * slots)) : 0;
+  return '▰'.repeat(filled) + '▱'.repeat(slots - filled);
+}
 
-    const taskNodes: TreeNode[] = useTodos
-      ? f.liveTodos.map((td) => ({ kind: 'task' as const, label: td.text, icon: todoIcon(td.status) }))
-      : f.skeleton.map((sk) => ({ kind: 'task' as const, label: sk.text, description: 'planned', icon: 'circle-outline' }));
+function taskNodes(f: Feature): TreeNode[] {
+  if (f.liveTodos.length > 0) {
+    return f.liveTodos.map((td): TreeNode => {
+      const v = todoVisual(td.status);
+      return { kind: 'task', label: td.text, icon: v.icon, iconColor: v.iconColor };
+    });
+  }
+  return f.skeleton.map((sk): TreeNode => ({
+    kind: 'task', label: sk.text, description: 'planned', icon: 'circle-outline', iconColor: 'disabledForeground',
+  }));
+}
 
-    const subagentNodes: TreeNode[] = f.subagents.map((s) => ({
-      kind: 'subagent' as const,
-      label: s.kind,
-      description: s.desc,
-      icon: s.status === 'converged' ? 'check' : 'sync~spin',
-    }));
+function subagentNodes(f: Feature): TreeNode[] {
+  return f.subagents.map((s): TreeNode => ({
+    kind: 'subagent',
+    label: s.kind,
+    description: s.desc,
+    icon: 'robot',
+    iconColor: s.status === 'converged' ? 'charts.green' : 'charts.blue',
+  }));
+}
 
-    const total = useTodos ? f.liveTodos.length : f.skeleton.length;
-    const done = f.liveTodos.filter((t) => t.status === 'completed').length;
+function featureNode(fv: FeatureView): TreeNode {
+  const v = featureIcon(fv.status);
+  return {
+    kind: 'feature',
+    label: fv.label,
+    description: `${progressBar(fv.done, fv.total)} ${fv.done}/${fv.total}`,
+    icon: v.icon,
+    iconColor: v.iconColor,
+    resourcePath: fv.feature.planPath ?? undefined,
+    children: [...taskNodes(fv.feature), ...subagentNodes(fv.feature)],
+  };
+}
 
-    return {
-      kind: 'feature' as const,
-      label: f.label,
-      description: `${done}/${total}`,
-      icon: featureIcon(f),
-      resourcePath: f.planPath ?? undefined,
-      children: [...taskNodes, ...subagentNodes],
-    };
-  });
+export function buildTree(state: State, options: ViewOptions): TreeNode[] {
+  return buildGroups(state, options).map((g): TreeNode => ({
+    kind: 'group',
+    label: g.isCurrentWindow ? `${g.label} (this window)` : g.label,
+    icon: 'folder',
+    children: g.features.map(featureNode),
+  }));
 }

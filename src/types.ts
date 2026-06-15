@@ -30,6 +30,7 @@ export interface Feature {
   session: string;
   label: string;
   labelSource: LabelSource;
+  cwd: string | null;
   planPath: string | null;
   skeleton: SkeletonTask[];
   liveTodos: Todo[];
@@ -57,3 +58,20 @@ export type TrackerEvent =
   | SubagentStartEvent
   | SubagentStopEvent
   | SessionStopEvent;
+
+export interface ViewOptions {
+  now: number;
+  workspaceFolders: string[];
+  hideDoneAfterMinutes: number;
+  dismissed: ReadonlySet<string>;
+}
+
+export interface TreeNode {
+  kind: 'group' | 'feature' | 'task' | 'subagent';
+  label: string;
+  description?: string;
+  icon?: string;
+  iconColor?: string;
+  children?: TreeNode[];
+  resourcePath?: string;
+}

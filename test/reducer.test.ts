@@ -129,4 +129,17 @@ describe('reduce', () => {
     // both are 'cwd' priority; latest wins is acceptable — assert it tracks the live cwd
     expect(reduce(events).features[0].label).toBe('second');
   });
+
+  it('stores the full cwd on the feature (latest event wins; null when never seen)', () => {
+    const withCwd = reduce([
+      { t: 'todo_update', ts: 1, session: 's1', cwd: '/a/one', todos: [{ text: 'x', status: 'pending' }] },
+      { t: 'subagent_stop', ts: 2, session: 's1', cwd: '/a/two' },
+    ] as TrackerEvent[]).features[0];
+    expect(withCwd.cwd).toBe('/a/two');
+
+    const noCwd = reduce([
+      { t: 'subagent_stop', ts: 1, session: 's2' },
+    ] as TrackerEvent[]).features[0];
+    expect(noCwd.cwd).toBeNull();
+  });
 });

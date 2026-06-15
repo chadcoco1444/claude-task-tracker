@@ -33,6 +33,7 @@ function newFeature(session: string): Feature {
     session,
     label: shortId(session),
     labelSource: 'default',
+    cwd: null,
     planPath: null,
     skeleton: [],
     liveTodos: [],
@@ -77,6 +78,7 @@ export function reduce(events: TrackerEvent[]): State {
     // Any event that carries a cwd can label the feature — not just SessionStart,
     // which is the event most likely to be missed for a pre-existing session.
     if ('cwd' in e && e.cwd) {
+      f.cwd = e.cwd;
       setLabel(f, basename(e.cwd), 'cwd');
     }
     switch (e.t) {

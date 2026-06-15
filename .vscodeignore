@@ -4,6 +4,7 @@ src/
 test/
 scripts/
 .github/
+.gitignore
 node_modules/
 esbuild.js
 tsconfig.json

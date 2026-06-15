@@ -76,10 +76,11 @@ function writeIfChanged(
   before: ClaudeSettings,
   after: ClaudeSettings,
 ): { changed: boolean } {
-  const next = JSON.stringify(after, null, 2);
-  // Compare with the same formatting we write, so a true no-op is detected
-  // (a compact stringify would never equal the pretty-printed `next`).
-  if (JSON.stringify(before, null, 2) === next) return { changed: false };
+  // Write with a trailing newline (POSIX-friendly; avoids diff noise when a
+  // user later edits the file). Compare with the same formatting we write so a
+  // true no-op is still detected.
+  const next = JSON.stringify(after, null, 2) + '\n';
+  if (JSON.stringify(before, null, 2) + '\n' === next) return { changed: false };
   fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
   fs.writeFileSync(settingsPath, next);
   return { changed: true };

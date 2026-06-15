@@ -1,11 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { applyHooks, removeHooks, isOurEntry, HOOK_EVENTS, ClaudeSettings } from '../src/hookInstaller';
+import { applyHooks, removeHooks, isOurEntry, HOOK_EVENTS, ClaudeSettings, installHooks, uninstallHooks } from '../src/hookInstaller';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { installHooks, uninstallHooks } from '../src/hookInstaller';
 
 const CMD = 'node "/ext/0.3.0/dist/hook.js"';
+
+function tmpSettings(initial?: string): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctt-'));
+  const p = path.join(dir, 'settings.json');
+  if (initial !== undefined) fs.writeFileSync(p, initial);
+  return p;
+}
 
 describe('applyHooks', () => {
   it('installs all six hook events with correct matchers on empty settings', () => {
@@ -74,13 +80,6 @@ describe('removeHooks', () => {
     expect(removeHooks(emptyHooks)).toBe(emptyHooks);
   });
 });
-
-function tmpSettings(initial?: string): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctt-'));
-  const p = path.join(dir, 'settings.json');
-  if (initial !== undefined) fs.writeFileSync(p, initial);
-  return p;
-}
 
 describe('installHooks (filesystem)', () => {
   it('creates the file (and parent dirs) with our hooks when missing', () => {

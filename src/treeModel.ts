@@ -53,6 +53,7 @@ function featureNode(fv: FeatureView): TreeNode {
   const v = featureIcon(fv.status);
   return {
     kind: 'feature',
+    session: fv.session,
     label: fv.label,
     description: `${progressBar(fv.done, fv.total)} ${fv.done}/${fv.total}`,
     icon: v.icon,

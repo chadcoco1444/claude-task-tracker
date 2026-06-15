@@ -35,6 +35,7 @@ describe('buildTree', () => {
 
     const feature = group.children![0];
     expect(feature.kind).toBe('feature');
+    expect(feature.session).toBe('s1');
     expect(feature.icon).toBe('rocket');
     expect(feature.iconColor).toBe('charts.blue');           // active
     expect(feature.description).toBe('▰▰▱▱ 1/2');

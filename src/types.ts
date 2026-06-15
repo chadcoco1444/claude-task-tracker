@@ -74,4 +74,5 @@ export interface TreeNode {
   iconColor?: string;
   children?: TreeNode[];
   resourcePath?: string;
+  session?: string;
 }

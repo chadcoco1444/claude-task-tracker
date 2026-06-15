@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildTree } from '../src/treeModel';
+import { buildTree, progressBar } from '../src/treeModel';
 import { reduce } from '../src/reducer';
 import { TrackerEvent, TreeNode, ViewOptions } from '../src/types';
 
@@ -55,5 +55,14 @@ describe('buildTree', () => {
     expect(feature.resourcePath).toBe('c:/ws/auth/p.md');
     const task = feature.children![0];
     expect(task.description).toBe('planned');
+  });
+});
+
+describe('progressBar', () => {
+  it('fills proportionally, empty when total is 0, and clamps when done exceeds total', () => {
+    expect(progressBar(0, 0)).toBe('▱▱▱▱');
+    expect(progressBar(1, 2)).toBe('▰▰▱▱');
+    expect(progressBar(2, 2)).toBe('▰▰▰▰');
+    expect(progressBar(3, 2)).toBe('▰▰▰▰'); // clamped, must not throw
   });
 });

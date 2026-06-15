@@ -21,32 +21,32 @@ function todoVisual(status: TodoStatus): { icon: string; iconColor: string } {
   return { icon: 'circle-outline', iconColor: 'disabledForeground' };
 }
 
-function progressBar(done: number, total: number): string {
+export function progressBar(done: number, total: number): string {
   const slots = 4;
-  const filled = total > 0 ? Math.round((done / total) * slots) : 0;
+  const filled = total > 0 ? Math.min(slots, Math.round((done / total) * slots)) : 0;
   return '▰'.repeat(filled) + '▱'.repeat(slots - filled);
 }
 
 function taskNodes(f: Feature): TreeNode[] {
   if (f.liveTodos.length > 0) {
-    return f.liveTodos.map((td) => {
+    return f.liveTodos.map((td): TreeNode => {
       const v = todoVisual(td.status);
-      return { kind: 'task', label: td.text, icon: v.icon, iconColor: v.iconColor } as TreeNode;
+      return { kind: 'task', label: td.text, icon: v.icon, iconColor: v.iconColor };
     });
   }
-  return f.skeleton.map((sk) => ({
+  return f.skeleton.map((sk): TreeNode => ({
     kind: 'task', label: sk.text, description: 'planned', icon: 'circle-outline', iconColor: 'disabledForeground',
-  } as TreeNode));
+  }));
 }
 
 function subagentNodes(f: Feature): TreeNode[] {
-  return f.subagents.map((s) => ({
+  return f.subagents.map((s): TreeNode => ({
     kind: 'subagent',
     label: s.kind,
     description: s.desc,
     icon: 'robot',
     iconColor: s.status === 'converged' ? 'charts.green' : 'charts.blue',
-  } as TreeNode));
+  }));
 }
 
 function featureNode(fv: FeatureView): TreeNode {
@@ -63,10 +63,10 @@ function featureNode(fv: FeatureView): TreeNode {
 }
 
 export function buildTree(state: State, options: ViewOptions): TreeNode[] {
-  return buildGroups(state, options).map((g) => ({
+  return buildGroups(state, options).map((g): TreeNode => ({
     kind: 'group',
     label: g.isCurrentWindow ? `${g.label} (this window)` : g.label,
     icon: 'folder',
     children: g.features.map(featureNode),
-  } as TreeNode));
+  }));
 }

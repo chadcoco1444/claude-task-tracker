@@ -41,4 +41,13 @@ describe('renderDashboardHtml', () => {
     expect(html).toContain('<h3>proj (this window)</h3>');
     expect(html).toContain('<h4>feat</h4>');
   });
+
+  it('shows an ended pill for an ended feature', () => {
+    const state = reduce([
+      { t: 'todo_update', ts: 1, session: 's1', cwd: 'c:/ws/auth', todos: [{ text: 'a', status: 'completed' }] },
+      { t: 'session_end', ts: 2, session: 's1' },
+    ] as TrackerEvent[]);
+    const html = renderDashboardHtml(state, { now: 1000, workspaceFolders: ['c:/ws/auth'], hideDoneAfterMinutes: 0, dismissed: new Set() });
+    expect(html).toContain('ended');
+  });
 });

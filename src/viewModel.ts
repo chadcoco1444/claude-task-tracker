@@ -71,7 +71,7 @@ export function isVisible(f: Feature, o: ViewOptions): boolean {
   if (o.dismissed.has(f.session)) {
     return false;
   }
-  if (f.status === 'done' && o.hideDoneAfterMinutes > 0) {
+  if ((f.status === 'done' || f.status === 'ended') && o.hideDoneAfterMinutes > 0) {
     if (o.now - f.lastTs > o.hideDoneAfterMinutes * 60_000) {
       return false;
     }

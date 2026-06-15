@@ -39,20 +39,20 @@ function newFeature(session: string): Feature {
     liveTodos: [],
     subagents: [],
     stopped: false,
+    ended: false,
     lastTs: 0,
     status: 'idle',
   };
 }
 
 function deriveStatus(f: Feature): Feature['status'] {
+  if (f.ended) {
+    return 'ended';
+  }
   const running = f.subagents.some((s) => s.status === 'running');
   const inProgress = f.liveTodos.some((t) => t.status === 'in_progress');
   const allDone = f.liveTodos.length > 0 && f.liveTodos.every((t) => t.status === 'completed');
-  // A detected-but-never-executed plan (skeleton present, zero live todos) must
-  // NOT count as done — that produced the misleading "0/10 ✓" feature. Only a
-  // session with genuinely nothing to track may be done on an empty todo list.
-  const nothingPlanned = f.liveTodos.length === 0 && f.skeleton.length === 0;
-  if (f.stopped && !running && (allDone || nothingPlanned)) {
+  if (f.stopped && !running && allDone) {
     return 'done';
   }
   if (running || inProgress) {
@@ -112,6 +112,9 @@ export function reduce(events: TrackerEvent[]): State {
       }
       case 'session_stop':
         f.stopped = true;
+        break;
+      case 'session_end':
+        f.ended = true;
         break;
     }
     f.status = deriveStatus(f);

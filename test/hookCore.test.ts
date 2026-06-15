@@ -62,6 +62,29 @@ describe('buildEvents', () => {
     const subStop = buildEvents({ hook_event_name: 'SubagentStop', session_id: 's1' }, 1, noPlan);
     expect('cwd' in subStop[0]).toBe(false);
   });
+
+  it('SessionEnd maps to session_end', () => {
+    expect(buildEvents({ hook_event_name: 'SessionEnd', session_id: 's1' }, 7, noPlan))
+      .toEqual([{ t: 'session_end', ts: 7, session: 's1' }]);
+  });
+
+  it('a Write to a plan file re-emits plan_detected', () => {
+    const plan: PlanInfo = { plan: '/r/p.md', title: 'P', tasks: [{ id: 'T1', text: 'a' }] };
+    const payload: HookPayload = {
+      hook_event_name: 'PostToolUse', session_id: 's1', cwd: '/r', tool_name: 'Write',
+      tool_input: { file_path: '/r/docs/superpowers/plans/2026-06-15-x.md' },
+    };
+    const events = buildEvents(payload, 9, () => plan);
+    expect(events).toEqual([{ t: 'plan_detected', ts: 9, session: 's1', plan: '/r/p.md', title: 'P', tasks: [{ id: 'T1', text: 'a' }] }]);
+  });
+
+  it('a Write to a non-plan file emits nothing', () => {
+    const payload: HookPayload = {
+      hook_event_name: 'PostToolUse', session_id: 's1', cwd: '/r', tool_name: 'Write',
+      tool_input: { file_path: '/r/src/index.ts' },
+    };
+    expect(buildEvents(payload, 9, () => ({ plan: '/r/p.md', tasks: [] }))).toEqual([]);
+  });
 });
 
 describe('planParse', () => {

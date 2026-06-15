@@ -63,6 +63,16 @@ describe('isVisible', () => {
     expect(active.status).toBe('active');
     expect(isVisible(active, opts({ dismissed: new Set(['s']) }))).toBe(true);
   });
+
+  it('hides an ended feature past the retention window, shows it within', () => {
+    const ended = reduce([
+      { t: 'todo_update', ts: 0, session: 's', todos: [{ text: 'x', status: 'completed' }] },
+      { t: 'session_end', ts: 0, session: 's' },
+    ] as TrackerEvent[]).features[0];
+    expect(ended.status).toBe('ended');
+    expect(isVisible(ended, opts({ now: 20 * 60_000 }))).toBe(true);   // within 30m
+    expect(isVisible(ended, opts({ now: 40 * 60_000 }))).toBe(false);  // past 30m
+  });
 });
 
 describe('buildGroups', () => {

@@ -19,7 +19,7 @@ export interface Subagent {
   status: SubagentStatus;
 }
 
-export type FeatureStatus = 'active' | 'idle' | 'done';
+export type FeatureStatus = 'active' | 'idle' | 'done' | 'ended';
 
 // Where a feature's label came from, in ascending priority. A higher-priority
 // source may overwrite a lower one, never the reverse — so a plan title always
@@ -36,6 +36,7 @@ export interface Feature {
   liveTodos: Todo[];
   subagents: Subagent[];
   stopped: boolean;
+  ended: boolean;
   lastTs: number;
   status: FeatureStatus;
 }
@@ -50,6 +51,7 @@ export interface TodoUpdateEvent { t: 'todo_update'; ts: number; session: string
 export interface SubagentStartEvent { t: 'subagent_start'; ts: number; session: string; cwd?: string; agent: string; kind: string; desc: string; taskId?: string; }
 export interface SubagentStopEvent { t: 'subagent_stop'; ts: number; session: string; cwd?: string; agent?: string; }
 export interface SessionStopEvent { t: 'session_stop'; ts: number; session: string; cwd?: string; }
+export interface SessionEndEvent { t: 'session_end'; ts: number; session: string; cwd?: string; }
 
 export type TrackerEvent =
   | SessionStartEvent
@@ -57,7 +59,8 @@ export type TrackerEvent =
   | TodoUpdateEvent
   | SubagentStartEvent
   | SubagentStopEvent
-  | SessionStopEvent;
+  | SessionStopEvent
+  | SessionEndEvent;
 
 export interface ViewOptions {
   now: number;

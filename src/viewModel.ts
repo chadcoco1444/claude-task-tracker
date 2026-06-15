@@ -63,6 +63,12 @@ export function isVisible(f: Feature, o: ViewOptions): boolean {
   if (o.dismissed.has(f.session)) {
     return false;
   }
+  // Drop "ghost" sessions: ones that ended having only opened a plan, never
+  // recording a single todo_update or subagent. They'd otherwise linger as
+  // empty 0/N duplicates of whichever session actually ran the plan.
+  if (f.status === 'ended' && f.liveTodos.length === 0 && f.subagents.length === 0) {
+    return false;
+  }
   if ((f.status === 'done' || f.status === 'ended') && o.hideDoneAfterMinutes > 0) {
     if (o.now - f.lastTs > o.hideDoneAfterMinutes * 60_000) {
       return false;

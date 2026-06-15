@@ -73,6 +73,27 @@ describe('isVisible', () => {
     expect(isVisible(ended, opts({ now: 20 * 60_000 }))).toBe(true);   // within 30m
     expect(isVisible(ended, opts({ now: 40 * 60_000 }))).toBe(false);  // past 30m
   });
+
+  it('hides a ghost session: ended having only opened a plan, no todos or subagents', () => {
+    const ghost = reduce([
+      { t: 'plan_detected', ts: 0, session: 's', plan: '/p.md', title: 'P',
+        tasks: [{ id: 'T1', text: 'a' }] },
+      { t: 'session_end', ts: 0, session: 's' },
+    ] as TrackerEvent[]).features[0];
+    expect(ghost.status).toBe('ended');
+    // Hidden immediately, even within the retention window and with retention off.
+    expect(isVisible(ghost, opts({ now: 0 }))).toBe(false);
+    expect(isVisible(ghost, opts({ now: 0, hideDoneAfterMinutes: 0 }))).toBe(false);
+  });
+
+  it('keeps an ended feature that ran subagents but recorded no live todos', () => {
+    const worked = reduce([
+      { t: 'subagent_start', ts: 0, session: 's', agent: 'a1', kind: 'reviewer', desc: 'review' },
+      { t: 'session_end', ts: 0, session: 's' },
+    ] as TrackerEvent[]).features[0];
+    expect(worked.status).toBe('ended');
+    expect(isVisible(worked, opts({ now: 0 }))).toBe(true);   // within retention, did work
+  });
 });
 
 describe('buildGroups', () => {

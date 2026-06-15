@@ -73,6 +73,14 @@ describe('isVisible', () => {
     const f = doneFeature(0);
     expect(isVisible(f, opts({ now: 0, dismissed: new Set(['s']) }))).toBe(false);
   });
+
+  it('always shows an active feature, even if dismissed', () => {
+    const active = reduce([
+      { t: 'todo_update', ts: 0, session: 's', todos: [{ text: 'x', status: 'in_progress' }] },
+    ] as TrackerEvent[]).features[0];
+    expect(active.status).toBe('active');
+    expect(isVisible(active, opts({ dismissed: new Set(['s']) }))).toBe(true);
+  });
 });
 
 describe('buildGroups', () => {

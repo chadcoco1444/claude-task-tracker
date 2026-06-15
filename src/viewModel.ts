@@ -57,6 +57,9 @@ export function featureCounts(f: Feature): { done: number; total: number } {
 }
 
 export function isVisible(f: Feature, o: ViewOptions): boolean {
+  if (f.status === 'active') {
+    return true;
+  }
   if (o.dismissed.has(f.session)) {
     return false;
   }

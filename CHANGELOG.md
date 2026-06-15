@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1
+
+- **Hide "ghost" sessions:** an ended session that only opened a plan — no
+  `todo_update`, no subagents — no longer lingers as an empty `0/N` duplicate
+  of whichever session actually ran the plan. Sessions that did real work (live
+  todos or subagents) are still shown through the normal retention window.
+
 ## 0.2.0
 
 - **v2.5 — cleanup & hardening:** bounded event-log growth (`logRetentionDays`,

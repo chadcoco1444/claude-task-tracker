@@ -65,3 +65,13 @@ export interface ViewOptions {
   hideDoneAfterMinutes: number;
   dismissed: ReadonlySet<string>;
 }
+
+export interface TreeNode {
+  kind: 'group' | 'feature' | 'task' | 'subagent';
+  label: string;
+  description?: string;
+  icon?: string;
+  iconColor?: string;
+  children?: TreeNode[];
+  resourcePath?: string;
+}

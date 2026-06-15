@@ -46,6 +46,10 @@ describe('isOurEntry', () => {
     expect(isOurEntry({ hooks: [{ type: 'command', command: 'node "C:\\a\\dist\\hook.js"' }] })).toBe(true);
     expect(isOurEntry({ hooks: [{ type: 'command', command: 'node other.js' }] })).toBe(false);
   });
+
+  it('returns false for undefined', () => {
+    expect(isOurEntry(undefined)).toBe(false);
+  });
 });
 
 describe('removeHooks', () => {
@@ -57,5 +61,12 @@ describe('removeHooks', () => {
     const out = removeHooks(settings);
     expect(out.hooks!['Stop']).toEqual([{ hooks: [{ type: 'command', command: 'echo hi' }] }]);
     expect(out.hooks!['SessionStart']).toBeUndefined();
+  });
+
+  it('returns the original settings object when there are no hooks', () => {
+    const empty = {} as ClaudeSettings;
+    expect(removeHooks(empty)).toBe(empty);
+    const emptyHooks = { hooks: {} } as ClaudeSettings;
+    expect(removeHooks(emptyHooks)).toBe(emptyHooks);
   });
 });

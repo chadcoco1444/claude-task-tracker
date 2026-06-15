@@ -52,7 +52,7 @@ export function applyHooks(settings: ClaudeSettings, command: string): ClaudeSet
 // Pure: return a new settings object with all of our entries removed and any
 // event left empty dropped entirely.
 export function removeHooks(settings: ClaudeSettings): ClaudeSettings {
-  if (!settings.hooks) return settings;
+  if (!settings.hooks || Object.keys(settings.hooks).length === 0) return settings;
   const hooks: Record<string, HookEntry[]> = {};
   for (const [event, arr] of Object.entries(settings.hooks)) {
     const kept = arr.filter((e) => !isOurEntry(e));

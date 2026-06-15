@@ -1,0 +1,39 @@
+{
+  "name": "claude-task-tracker",
+  "displayName": "Claude Task Tracker",
+  "description": "Visualize Claude Code task progress and subagent convergence.",
+  "version": "0.0.1",
+  "publisher": "local",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        { "id": "claudeTaskTracker", "title": "Tracker", "icon": "$(checklist)" }
+      ]
+    },
+    "views": {
+      "claudeTaskTracker": [
+        { "id": "claudeTaskTracker.view", "name": "Tasks & Subagents" }
+      ]
+    },
+    "commands": [
+      { "command": "claudeTaskTracker.refresh", "title": "Tracker: Refresh" },
+      { "command": "claudeTaskTracker.focus", "title": "Tracker: Focus" }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.4.0"
+  }
+}

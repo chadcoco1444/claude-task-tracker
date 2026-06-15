@@ -29,4 +29,19 @@ describe('TrackerStore.recompute', () => {
     expect(store.state.features).toEqual([]);
     store.dispose();
   });
+
+  it('compacts events older than the retention window on start()', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'store-compact-'));
+    const logPath = path.join(dir, 'events.jsonl');
+    fs.writeFileSync(logPath,
+      '{"t":"session_stop","ts":0,"session":"old"}\n' +
+      `{"t":"session_stop","ts":${Date.now()},"session":"fresh"}\n`);
+    const store = new TrackerStore(logPath, () => 14);
+    store.start();
+    store.dispose();
+    const back = fs.readFileSync(logPath, 'utf8');
+    expect(back).not.toContain('"old"');
+    expect(back).toContain('"fresh"');
+    expect(store.state.features.map((f) => f.session)).toEqual(['fresh']);
+  });
 });

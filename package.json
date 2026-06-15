@@ -71,9 +71,9 @@
     "watch": "node esbuild.js --watch",
     "test": "vitest run",
     "install-hooks": "node scripts/install-hooks.js",
-    "package": "vsce package --no-dependencies",
-    "publish:vsce": "vsce publish --no-dependencies",
-    "publish:ovsx": "ovsx publish"
+    "package": "vsce package --no-dependencies -o claude-task-tracker.vsix",
+    "publish:vsce": "vsce publish --no-dependencies --packagePath claude-task-tracker.vsix",
+    "publish:ovsx": "ovsx publish claude-task-tracker.vsix"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

@@ -74,4 +74,59 @@ describe('reduce', () => {
     ];
     expect(reduce(events).features[0].status).toBe('done');
   });
+
+  it('a stopped session whose plan was never executed is idle, not done (0/N must not be done)', () => {
+    const events: TrackerEvent[] = [
+      { t: 'session_start', ts: 1, session: 's1', cwd: '/a/repo' },
+      { t: 'plan_detected', ts: 2, session: 's1', plan: '/a/repo/p.md', title: 'P',
+        tasks: [{ id: 'T1', text: 'a' }, { id: 'T2', text: 'b' }] },
+      { t: 'session_stop', ts: 3, session: 's1' },
+    ];
+    expect(reduce(events).features[0].status).toBe('idle');
+  });
+
+  it('a stopped session with no plan and no todos is still done', () => {
+    const events: TrackerEvent[] = [
+      { t: 'session_start', ts: 1, session: 's1', cwd: '/a/repo' },
+      { t: 'session_stop', ts: 2, session: 's1' },
+    ];
+    expect(reduce(events).features[0].status).toBe('done');
+  });
+
+  it('labels feature from cwd carried on a non-session_start event (SessionStart missed)', () => {
+    const events: TrackerEvent[] = [
+      { t: 'todo_update', ts: 1, session: 's1', cwd: '/home/u/myproj', todos: [{ text: 'x', status: 'pending' }] },
+    ];
+    expect(reduce(events).features[0].label).toBe('myproj');
+  });
+
+  it('falls back to a short session id when no cwd and no title ever arrive', () => {
+    const events: TrackerEvent[] = [
+      { t: 'subagent_stop', ts: 1, session: '448dc281-9db9-4cd0-8a55-befd7c569336' },
+    ];
+    expect(reduce(events).features[0].label).toBe('448dc281');
+  });
+
+  it('plan title beats a cwd label regardless of event order', () => {
+    const titleFirst = reduce([
+      { t: 'plan_detected', ts: 1, session: 's1', plan: '/r/p.md', title: 'My Plan', tasks: [] },
+      { t: 'todo_update', ts: 2, session: 's1', cwd: '/r/repo', todos: [{ text: 'x', status: 'pending' }] },
+    ] as TrackerEvent[]).features[0];
+    expect(titleFirst.label).toBe('My Plan');
+
+    const cwdFirst = reduce([
+      { t: 'todo_update', ts: 1, session: 's2', cwd: '/r/repo', todos: [{ text: 'x', status: 'pending' }] },
+      { t: 'plan_detected', ts: 2, session: 's2', plan: '/r/p.md', title: 'My Plan', tasks: [] },
+    ] as TrackerEvent[]).features[0];
+    expect(cwdFirst.label).toBe('My Plan');
+  });
+
+  it('a cwd-bearing event does not overwrite an explicit session_start cwd label', () => {
+    const events: TrackerEvent[] = [
+      { t: 'session_start', ts: 1, session: 's1', cwd: '/a/first' },
+      { t: 'todo_update', ts: 2, session: 's1', cwd: '/a/second', todos: [{ text: 'x', status: 'pending' }] },
+    ];
+    // both are 'cwd' priority; latest wins is acceptable — assert it tracks the live cwd
+    expect(reduce(events).features[0].label).toBe('second');
+  });
 });

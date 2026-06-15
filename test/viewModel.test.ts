@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { relativeTime, groupOf, buildGroups, featureCounts, isVisible } from '../src/viewModel';
+import { relativeTime, groupOf, buildGroups, featureCounts, isVisible, locate } from '../src/viewModel';
 import { reduce } from '../src/reducer';
 import { TrackerEvent, ViewOptions } from '../src/types';
 
@@ -103,5 +103,34 @@ describe('buildGroups', () => {
     // both colliding features get a stable shortId suffix (symmetric), and they are distinct
     expect(labels).toEqual(['Plan · aaa11111', 'Plan · bbb22222']);
     expect(groups.some((g) => g.label === 'Other' && !g.isCurrentWindow)).toBe(true);
+  });
+});
+
+describe('locate', () => {
+  const folders = ['c:\\ws\\claude-task-tracker'];
+
+  it('splits a worktree path into repo + worktree, keeping original case', () => {
+    const l = locate('C:\\Users\\me\\TradeMatrix\\.worktrees\\sc-declutter', folders);
+    expect(l.repoLabel).toBe('TradeMatrix');
+    expect(l.worktree).toBe('sc-declutter');
+    expect(l.isCurrentWindow).toBe(false);
+  });
+
+  it('treats a normal repo as worktree=null', () => {
+    const l = locate('c:\\ws\\claude-task-tracker\\src', folders);
+    expect(l.repoLabel).toBe('claude-task-tracker');
+    expect(l.worktree).toBeNull();
+    expect(l.isCurrentWindow).toBe(true);
+  });
+
+  it('flags a worktree opened as the window folder as current window', () => {
+    const l = locate('c:\\r\\Proj\\.worktrees\\feat', ['c:\\r\\Proj\\.worktrees\\feat']);
+    expect(l.worktree).toBe('feat');
+    expect(l.repoLabel).toBe('Proj');
+    expect(l.isCurrentWindow).toBe(true);
+  });
+
+  it('maps a missing cwd to Unknown', () => {
+    expect(locate(null, folders)).toEqual({ repoKey: '', repoLabel: 'Unknown (no cwd)', worktree: null, isCurrentWindow: false });
   });
 });

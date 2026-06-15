@@ -49,6 +49,38 @@ export function groupOf(cwd: string | null, workspaceFolders: string[]): Group {
   return { key: cwd, label: basename(cwd), isCurrentWindow: false };
 }
 
+export interface Location {
+  repoKey: string;
+  repoLabel: string;
+  worktree: string | null;
+  isCurrentWindow: boolean;
+}
+
+export function locate(cwd: string | null, workspaceFolders: string[]): Location {
+  if (!cwd) {
+    return { repoKey: '', repoLabel: 'Unknown (no cwd)', worktree: null, isCurrentWindow: false };
+  }
+  const slash = cwd.replace(/\\/g, '/').replace(/\/+$/, '');
+  const lower = slash.toLowerCase();
+  let matchedFolder: string | undefined;
+  const isCurrentWindow = workspaceFolders.some((folder) => {
+    const f = folder.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+    if (lower === f || lower.startsWith(f + '/')) {
+      matchedFolder = folder.replace(/\\/g, '/').replace(/\/+$/, '');
+      return true;
+    }
+    return false;
+  });
+  const m = slash.match(/^(.*)\/\.worktrees\/([^/]+)(?:\/.*)?$/i);
+  if (m) {
+    return { repoKey: m[1].toLowerCase(), repoLabel: basename(m[1]), worktree: m[2], isCurrentWindow };
+  }
+  if (isCurrentWindow && matchedFolder) {
+    return { repoKey: matchedFolder.toLowerCase(), repoLabel: basename(matchedFolder), worktree: null, isCurrentWindow };
+  }
+  return { repoKey: lower, repoLabel: basename(slash), worktree: null, isCurrentWindow };
+}
+
 export function featureCounts(f: Feature): { done: number; total: number } {
   const useTodos = f.liveTodos.length > 0;
   const total = useTodos ? f.liveTodos.length : f.skeleton.length;

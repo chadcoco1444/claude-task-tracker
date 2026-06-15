@@ -44,6 +44,8 @@ export function buildEvents(payload: HookPayload, now: number, planLookup: PlanL
   // so the reducer can label a feature even when its SessionStart was missed.
   const cwd = payload.cwd;
   const withCwd = <T extends object>(e: T): T => (cwd ? { ...e, cwd } : e);
+  const isPlanFile = (p: unknown): boolean =>
+    typeof p === 'string' && /[\\/]docs[\\/]+superpowers[\\/]+plans[\\/].+\.md$/i.test(p);
 
   switch (payload.hook_event_name) {
     case 'SessionStart': {
@@ -64,6 +66,15 @@ export function buildEvents(payload: HookPayload, now: number, planLookup: PlanL
         }));
         return [withCwd({ t: 'todo_update', ts: now, session, todos })];
       }
+      if (
+        (payload.tool_name === 'Write' || payload.tool_name === 'Edit' || payload.tool_name === 'MultiEdit') &&
+        isPlanFile(payload.tool_input?.file_path)
+      ) {
+        const plan = cwd ? planLookup(cwd) : null;
+        if (plan) {
+          return [{ t: 'plan_detected', ts: now, session, plan: plan.plan, title: plan.title, tasks: plan.tasks }];
+        }
+      }
       return [];
     case 'PreToolUse':
       if (payload.tool_name === 'Task') {
@@ -81,6 +92,8 @@ export function buildEvents(payload: HookPayload, now: number, planLookup: PlanL
       return [withCwd({ t: 'subagent_stop', ts: now, session })];
     case 'Stop':
       return [withCwd({ t: 'session_stop', ts: now, session })];
+    case 'SessionEnd':
+      return [withCwd({ t: 'session_end', ts: now, session })];
     default:
       return [];
   }

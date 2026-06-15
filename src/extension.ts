@@ -40,9 +40,9 @@ export function activate(context: vscode.ExtensionContext): void {
       vscode.commands.executeCommand('claudeTaskTracker.view.focus');
     }),
     vscode.commands.registerCommand('claudeTaskTracker.refresh', refreshAll),
-    vscode.commands.registerCommand('claudeTaskTracker.clearCompleted', () => {
+    vscode.commands.registerCommand('claudeTaskTracker.clearInactive', () => {
       for (const f of store.state.features) {
-        if (f.status === 'done') {
+        if (f.status !== 'active') {
           dismissed.add(f.session);
         }
       }

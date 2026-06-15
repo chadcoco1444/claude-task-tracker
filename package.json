@@ -25,7 +25,7 @@
     "commands": [
       { "command": "claudeTaskTracker.refresh", "title": "Tracker: Refresh" },
       { "command": "claudeTaskTracker.focus", "title": "Tracker: Focus" },
-      { "command": "claudeTaskTracker.clearCompleted", "title": "Tracker: Clear completed" }
+      { "command": "claudeTaskTracker.clearInactive", "title": "Tracker: Clear inactive" }
     ],
     "configuration": {
       "title": "Claude Task Tracker",

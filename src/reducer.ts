@@ -1,16 +1,5 @@
 import { Feature, LabelSource, State, TrackerEvent } from './types';
-
-function basename(p: string): string {
-  const parts = p.replace(/\\/g, '/').split('/').filter(Boolean);
-  return parts.length ? parts[parts.length - 1] : p;
-}
-
-// Last-resort label when neither a cwd nor a plan title is ever seen for a
-// session (e.g. it was already running when the hooks were installed, so its
-// SessionStart never fired). The first UUID segment is short yet unique enough.
-function shortId(session: string): string {
-  return session.split('-')[0] || session;
-}
+import { basename, shortId } from './util';
 
 const LABEL_PRIORITY: Record<LabelSource, number> = { default: 0, cwd: 1, title: 2 };
 
@@ -98,6 +87,9 @@ export function reduce(events: TrackerEvent[]): State {
       case 'subagent_start':
         f.subagents.push({ id: e.agent, kind: e.kind, desc: e.desc, status: 'running' });
         break;
+      // FIFO approximation: SubagentStop carries no subagent id, so we converge
+      // the oldest still-running subagent. Exact attribution isn't possible from
+      // the hook payload (see v2.5 spec, Q1).
       case 'subagent_stop': {
         let target = e.agent
           ? f.subagents.find((s) => s.id === e.agent && s.status === 'running')

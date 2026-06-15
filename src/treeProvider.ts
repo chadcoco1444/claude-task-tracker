@@ -18,6 +18,7 @@ export class TrackerTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       ? vscode.TreeItemCollapsibleState.Expanded
       : vscode.TreeItemCollapsibleState.None;
     const item = new vscode.TreeItem(node.label, collapsible);
+    item.contextValue = node.kind;
     item.description = node.description;
     if (node.icon) {
       item.iconPath = new vscode.ThemeIcon(

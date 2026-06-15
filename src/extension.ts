@@ -9,7 +9,9 @@ import { TreeNode, ViewOptions } from './types';
 const DISMISSED_KEY = 'claudeTaskTracker.dismissed';
 
 export function activate(context: vscode.ExtensionContext): void {
-  const store = new TrackerStore(eventLogPath());
+  const store = new TrackerStore(eventLogPath(), () =>
+    vscode.workspace.getConfiguration('claudeTaskTracker').get<number>('logRetentionDays', 14),
+  );
   const dismissed = new Set<string>(context.globalState.get<string[]>(DISMISSED_KEY, []));
   const persistDismissed = () => context.globalState.update(DISMISSED_KEY, [...dismissed]);
 

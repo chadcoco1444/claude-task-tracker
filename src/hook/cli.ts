@@ -4,6 +4,10 @@ import { appendEvent } from '../eventLog';
 import { eventLogPath } from '../paths';
 import { buildEvents, HookPayload, PlanInfo, planParse } from './core';
 
+// Picks the most-recently-modified plan under docs/superpowers/plans. With v2.4
+// live plan detection (a plan write re-emits plan_detected), the plan you just
+// wrote is newest and wins — so newest-by-mtime is correct in practice
+// (see v2.5 spec, Q2).
 function findNewestPlan(cwd: string): PlanInfo | null {
   try {
     const dir = path.join(cwd, 'docs', 'superpowers', 'plans');

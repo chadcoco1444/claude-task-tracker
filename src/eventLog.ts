@@ -32,3 +32,11 @@ export function appendEvent(logPath: string, event: TrackerEvent): void {
   fs.mkdirSync(path.dirname(logPath), { recursive: true });
   fs.appendFileSync(logPath, JSON.stringify(event) + '\n');
 }
+
+export function writeEvents(logPath: string, events: TrackerEvent[]): void {
+  fs.mkdirSync(path.dirname(logPath), { recursive: true });
+  const body = events.map((e) => JSON.stringify(e)).join('\n');
+  const tmp = `${logPath}.tmp`;
+  fs.writeFileSync(tmp, events.length ? body + '\n' : '');
+  fs.renameSync(tmp, logPath);
+}

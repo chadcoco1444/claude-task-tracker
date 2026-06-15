@@ -1,12 +1,19 @@
 import { SkeletonTask, TodoStatus, TrackerEvent } from '../types';
 
+export interface HookToolInput {
+  todos?: Array<{ content?: string; text?: string; status?: string; [key: string]: unknown }>;
+  file_path?: string;
+  subagent_type?: string;
+  description?: string;
+}
+
 export interface HookPayload {
   hook_event_name?: string;
   session_id?: string;
   cwd?: string;
   tool_name?: string;
   tool_use_id?: string;
-  tool_input?: any;
+  tool_input?: HookToolInput;
   source?: string;
 }
 
@@ -60,7 +67,7 @@ export function buildEvents(payload: HookPayload, now: number, planLookup: PlanL
     }
     case 'PostToolUse':
       if (payload.tool_name === 'TodoWrite' && Array.isArray(payload.tool_input?.todos)) {
-        const todos = payload.tool_input.todos.map((td: any) => ({
+        const todos = payload.tool_input.todos.map((td) => ({
           text: String(td.content ?? td.text ?? ''),
           status: (td.status ?? 'pending') as TodoStatus,
         }));

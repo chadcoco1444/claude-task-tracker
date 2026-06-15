@@ -58,4 +58,17 @@ describe('planParse', () => {
       tasks: [{ id: 'T1', text: 'DB schema' }, { id: 'T2', text: 'API routes' }],
     });
   });
+
+  it('also matches "## Task N:" (h2) headings used by real plans', () => {
+    const md = [
+      '# My Plan',
+      '## Task 1: Alpha',
+      'body',
+      '## Task 2: Beta',
+    ].join('\n');
+    expect(planParse(md)).toEqual({
+      title: 'My Plan',
+      tasks: [{ id: 'T1', text: 'Alpha' }, { id: 'T2', text: 'Beta' }],
+    });
+  });
 });

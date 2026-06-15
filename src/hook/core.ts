@@ -26,7 +26,7 @@ export function planParse(text: string): { title?: string; tasks: SkeletonTask[]
     if (h1 && !title) {
       title = h1[1];
     }
-    const task = line.match(/^###\s+Task\s+(\d+):\s*(.+?)\s*$/);
+    const task = line.match(/^#{2,3}\s+Task\s+(\d+):\s*(.+?)\s*$/);
     if (task) {
       tasks.push({ id: `T${task[1]}`, text: task[2] });
     }

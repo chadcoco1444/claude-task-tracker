@@ -27,7 +27,7 @@ Hooks captured: `SessionStart`, `PostToolUse`(TodoWrite), `PreToolUse`(Task),
 ## Status semantics
 
 - **Task** progress comes from Claude Code's live TodoWrite list; before any
-  todos exist, the plan's `### Task N:` headings are shown as "planned".
+  todos exist, the plan's `## Task N:` / `### Task N:` headings are shown as "planned".
 - A **subagent** is `running` until a `SubagentStop` event converges it.
   Convergence is attributed FIFO within a session (the MVP approximation; see
   the design doc).

@@ -64,6 +64,53 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 ---
 
+## Task 1b: Active features are never hidden
+
+**Files:** Modify `src/viewModel.ts`; Modify `test/viewModel.test.ts`.
+
+- [ ] **Step 1 (test → red):** In `test/viewModel.test.ts`, inside the `describe('isVisible', ...)` block, add:
+```ts
+  it('always shows an active feature, even if dismissed', () => {
+    const active = reduce([
+      { t: 'todo_update', ts: 0, session: 's', todos: [{ text: 'x', status: 'in_progress' }] },
+    ] as TrackerEvent[]).features[0];
+    expect(active.status).toBe('active');
+    expect(isVisible(active, opts({ dismissed: new Set(['s']) }))).toBe(true);
+  });
+```
+
+- [ ] **Step 2:** Run `npx vitest run viewModel` — expect FAIL (dismissed currently hides it).
+
+- [ ] **Step 3:** In `src/viewModel.ts`, change `isVisible` to short-circuit on active BEFORE the dismissed/auto-hide checks:
+```ts
+export function isVisible(f: Feature, o: ViewOptions): boolean {
+  if (f.status === 'active') {
+    return true;
+  }
+  if (o.dismissed.has(f.session)) {
+    return false;
+  }
+  if (f.status === 'done' && o.hideDoneAfterMinutes > 0) {
+    if (o.now - f.lastTs > o.hideDoneAfterMinutes * 60_000) {
+      return false;
+    }
+  }
+  return true;
+}
+```
+
+- [ ] **Step 4:** Run `npx vitest run viewModel` — PASS. Then `npx vitest run` (full) — all green. `npx tsc --noEmit` — clean.
+
+- [ ] **Step 5: Commit:**
+```bash
+git add src/viewModel.ts test/viewModel.test.ts
+git commit -m "fix: never hide an active feature (dismiss/auto-hide apply only when not active)
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
+```
+
+---
+
 ## Task 2: Commands + menus + contextValue (glue)
 
 **Files:** Modify `package.json`, `src/treeProvider.ts`.

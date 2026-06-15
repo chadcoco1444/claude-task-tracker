@@ -40,6 +40,27 @@ Because dismissal is now permanent, add command `claudeTaskTracker.resetDismisse
 
 On each store change, drop any dismissed id whose session is no longer present in `state.features` (i.e. its events were pruned from the log). This keeps the set bounded and means manually pruning the log also un-dismisses. If anything was removed, persist.
 
+### 5. Active features are never hidden
+
+`isVisible` currently checks `dismissed` first, so a session that was dismissed while `done`/`idle` stays hidden even after it resumes and becomes `active` again — a running session vanishes. With persistent dismiss (section 1) this would hide a resumed session across reloads forever. Fix: an `active` feature is ALWAYS visible — dismiss and auto-hide only apply to non-active features.
+
+```ts
+export function isVisible(f: Feature, o: ViewOptions): boolean {
+  if (f.status === 'active') {
+    return true; // a running session is always shown, even if previously dismissed
+  }
+  if (o.dismissed.has(f.session)) {
+    return false;
+  }
+  if (f.status === 'done' && o.hideDoneAfterMinutes > 0) {
+    if (o.now - f.lastTs > o.hideDoneAfterMinutes * 60_000) {
+      return false;
+    }
+  }
+  return true;
+}
+```
+
 ## Affected files
 
 - `src/types.ts` — `TreeNode` gains `session?: string`.

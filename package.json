@@ -27,7 +27,8 @@
   "scripts": {
     "build": "node esbuild.js",
     "watch": "node esbuild.js --watch",
-    "test": "vitest run"
+    "test": "vitest run",
+    "install-hooks": "node scripts/install-hooks.js"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

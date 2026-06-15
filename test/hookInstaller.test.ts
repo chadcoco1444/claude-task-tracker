@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { applyHooks, removeHooks, isOurEntry, HOOK_EVENTS, ClaudeSettings } from '../src/hookInstaller';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import { installHooks, uninstallHooks } from '../src/hookInstaller';
 
 const CMD = 'node "/ext/0.3.0/dist/hook.js"';
 
@@ -68,5 +72,42 @@ describe('removeHooks', () => {
     expect(removeHooks(empty)).toBe(empty);
     const emptyHooks = { hooks: {} } as ClaudeSettings;
     expect(removeHooks(emptyHooks)).toBe(emptyHooks);
+  });
+});
+
+function tmpSettings(initial?: string): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctt-'));
+  const p = path.join(dir, 'settings.json');
+  if (initial !== undefined) fs.writeFileSync(p, initial);
+  return p;
+}
+
+describe('installHooks (filesystem)', () => {
+  it('creates the file (and parent dirs) with our hooks when missing', () => {
+    const p = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ctt-')), 'nested', 'settings.json');
+    expect(installHooks(CMD, p).changed).toBe(true);
+    const written = JSON.parse(fs.readFileSync(p, 'utf8'));
+    expect(Object.keys(written.hooks)).toContain('SessionStart');
+  });
+
+  it('reports changed:false on a no-op repeat', () => {
+    const p = tmpSettings('{}');
+    expect(installHooks(CMD, p).changed).toBe(true);
+    expect(installHooks(CMD, p).changed).toBe(false);
+  });
+
+  it('throws and does not clobber an unparseable settings.json', () => {
+    const p = tmpSettings('{ not json');
+    expect(() => installHooks(CMD, p)).toThrow();
+    expect(fs.readFileSync(p, 'utf8')).toBe('{ not json');
+  });
+});
+
+describe('uninstallHooks (filesystem)', () => {
+  it('removes our hooks again', () => {
+    const p = tmpSettings('{}');
+    installHooks(CMD, p);
+    expect(uninstallHooks(p).changed).toBe(true);
+    expect(JSON.parse(fs.readFileSync(p, 'utf8')).hooks.SessionStart).toBeUndefined();
   });
 });

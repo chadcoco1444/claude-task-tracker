@@ -1,3 +1,7 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import { claudeSettingsPath } from './paths';
+
 export interface HookCommand {
   type: 'command';
   command: string;
@@ -59,4 +63,37 @@ export function removeHooks(settings: ClaudeSettings): ClaudeSettings {
     if (kept.length > 0) hooks[event] = kept;
   }
   return { ...settings, hooks };
+}
+
+function readSettings(settingsPath: string): ClaudeSettings {
+  if (!fs.existsSync(settingsPath)) return {};
+  // Throws on malformed JSON — callers must NOT clobber an unparseable file.
+  return JSON.parse(fs.readFileSync(settingsPath, 'utf8')) as ClaudeSettings;
+}
+
+function writeIfChanged(
+  settingsPath: string,
+  before: ClaudeSettings,
+  after: ClaudeSettings,
+): { changed: boolean } {
+  const next = JSON.stringify(after, null, 2);
+  // Compare with the same formatting we write, so a true no-op is detected
+  // (a compact stringify would never equal the pretty-printed `next`).
+  if (JSON.stringify(before, null, 2) === next) return { changed: false };
+  fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+  fs.writeFileSync(settingsPath, next);
+  return { changed: true };
+}
+
+export function installHooks(
+  command: string,
+  settingsPath: string = claudeSettingsPath(),
+): { changed: boolean } {
+  const before = readSettings(settingsPath);
+  return writeIfChanged(settingsPath, before, applyHooks(before, command));
+}
+
+export function uninstallHooks(settingsPath: string = claudeSettingsPath()): { changed: boolean } {
+  const before = readSettings(settingsPath);
+  return writeIfChanged(settingsPath, before, removeHooks(before));
 }

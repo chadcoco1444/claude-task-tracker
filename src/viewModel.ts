@@ -29,26 +29,6 @@ function norm(p: string): string {
   return p.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
 }
 
-export interface Group {
-  key: string;
-  label: string;
-  isCurrentWindow: boolean;
-}
-
-export function groupOf(cwd: string | null, workspaceFolders: string[]): Group {
-  if (!cwd) {
-    return { key: '', label: 'Unknown (no cwd)', isCurrentWindow: false };
-  }
-  const c = norm(cwd);
-  for (const folder of workspaceFolders) {
-    const f = norm(folder);
-    if (c === f || c.startsWith(f + '/')) {
-      return { key: folder, label: basename(folder), isCurrentWindow: true };
-    }
-  }
-  return { key: cwd, label: basename(cwd), isCurrentWindow: false };
-}
-
 export interface Location {
   repoKey: string;
   repoLabel: string;
@@ -112,48 +92,77 @@ export interface FeatureView {
   feature: Feature;
 }
 
-export interface GroupView {
+export interface WorktreeView {
+  name: string;
+  features: FeatureView[];
+}
+
+export interface RepoGroup {
   key: string;
   label: string;
   isCurrentWindow: boolean;
   features: FeatureView[];
+  worktrees: WorktreeView[];
 }
 
-export function buildGroups(state: State, o: ViewOptions): GroupView[] {
-  const groups = new Map<string, GroupView>();
+function toFeatureView(f: Feature): FeatureView {
+  const { done, total } = featureCounts(f);
+  return { session: f.session, label: f.label, status: f.status, done, total, feature: f };
+}
+
+function maxTs(features: FeatureView[]): number {
+  return features.reduce((m, fv) => Math.max(m, fv.feature.lastTs), 0);
+}
+
+export function buildGroups(state: State, o: ViewOptions): RepoGroup[] {
+  const repos = new Map<string, RepoGroup>();
 
   for (const f of state.features) {
     if (!isVisible(f, o)) {
       continue;
     }
-    const g = groupOf(f.cwd, o.workspaceFolders);
-    let gv = groups.get(g.key);
-    if (!gv) {
-      gv = { key: g.key, label: g.label, isCurrentWindow: g.isCurrentWindow, features: [] };
-      groups.set(g.key, gv);
+    const loc = locate(f.cwd, o.workspaceFolders);
+    let rg = repos.get(loc.repoKey);
+    if (!rg) {
+      rg = { key: loc.repoKey, label: loc.repoLabel, isCurrentWindow: false, features: [], worktrees: [] };
+      repos.set(loc.repoKey, rg);
     }
-    const { done, total } = featureCounts(f);
-    gv.features.push({ session: f.session, label: f.label, status: f.status, done, total, feature: f });
+    rg.isCurrentWindow = rg.isCurrentWindow || loc.isCurrentWindow;
+    if (loc.worktree === null) {
+      rg.features.push(toFeatureView(f));
+    } else {
+      let wt = rg.worktrees.find((w) => w.name === loc.worktree);
+      if (!wt) {
+        wt = { name: loc.worktree, features: [] };
+        rg.worktrees.push(wt);
+      }
+      wt.features.push(toFeatureView(f));
+    }
   }
 
-  for (const gv of groups.values()) {
-    gv.features.sort((a, b) => b.feature.lastTs - a.feature.lastTs);
-    disambiguate(gv.features);
+  const byRecent = (a: FeatureView, b: FeatureView) => b.feature.lastTs - a.feature.lastTs;
+  for (const rg of repos.values()) {
+    rg.features.sort(byRecent);
+    disambiguate(rg.features);
+    rg.worktrees.sort((a, b) => maxTs(b.features) - maxTs(a.features));
+    for (const wt of rg.worktrees) {
+      wt.features.sort(byRecent);
+      disambiguate(wt.features);
+    }
   }
 
-  return [...groups.values()].sort((a, b) => {
+  const repoMaxTs = (rg: RepoGroup) =>
+    Math.max(maxTs(rg.features), ...rg.worktrees.map((w) => maxTs(w.features)), 0);
+
+  return [...repos.values()].sort((a, b) => {
     if (a.isCurrentWindow !== b.isCurrentWindow) {
       return a.isCurrentWindow ? -1 : 1;
     }
-    if (a.key === '' !== (b.key === '')) {
+    if ((a.key === '') !== (b.key === '')) {
       return a.key === '' ? 1 : -1; // Unknown last
     }
-    return maxTs(b) - maxTs(a);
+    return repoMaxTs(b) - repoMaxTs(a);
   });
-}
-
-function maxTs(g: GroupView): number {
-  return g.features.reduce((m, fv) => Math.max(m, fv.feature.lastTs), 0);
 }
 
 function disambiguate(features: FeatureView[]): void {

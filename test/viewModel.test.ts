@@ -91,7 +91,9 @@ describe('buildGroups', () => {
 
     expect(groups[0].label).toBe('proj');
     expect(groups[0].isCurrentWindow).toBe(true);
-    expect(groups[0].features.every((fv) => fv.label.startsWith('Plan · '))).toBe(true);
+    const labels = groups[0].features.map((fv) => fv.label).sort();
+    // both colliding features get a stable shortId suffix (symmetric), and they are distinct
+    expect(labels).toEqual(['Plan · aaa11111', 'Plan · bbb22222']);
     expect(groups.some((g) => g.label === 'Other' && !g.isCurrentWindow)).toBe(true);
   });
 });

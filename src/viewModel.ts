@@ -103,7 +103,7 @@ export function buildGroups(state: State, o: ViewOptions): GroupView[] {
 
   for (const gv of groups.values()) {
     gv.features.sort((a, b) => b.feature.lastTs - a.feature.lastTs);
-    disambiguate(gv.features, o.now);
+    disambiguate(gv.features);
   }
 
   return [...groups.values()].sort((a, b) => {
@@ -121,21 +121,14 @@ function maxTs(g: GroupView): number {
   return g.features.reduce((m, fv) => Math.max(m, fv.feature.lastTs), 0);
 }
 
-function disambiguate(features: FeatureView[], now: number): void {
+function disambiguate(features: FeatureView[]): void {
   const counts = new Map<string, number>();
   for (const fv of features) {
     counts.set(fv.label, (counts.get(fv.label) ?? 0) + 1);
   }
-  const seen = new Map<string, number>();
   for (const fv of features) {
-    if ((counts.get(fv.label) ?? 0) < 2) {
-      continue;
+    if ((counts.get(fv.label) ?? 0) >= 2) {
+      fv.label = `${fv.label} · ${shortId(fv.session)}`;
     }
-    let suffix = relativeTime(now, fv.feature.lastTs);
-    const withTime = `${fv.label} · ${suffix}`;
-    const n = (seen.get(withTime) ?? 0) + 1;
-    seen.set(withTime, n);
-    suffix = n > 1 ? `${suffix} · ${shortId(fv.session)}` : suffix;
-    fv.label = `${fv.label} · ${suffix}`;
   }
 }

@@ -30,6 +30,7 @@ export interface Feature {
   session: string;
   label: string;
   labelSource: LabelSource;
+  cwd: string | null;
   planPath: string | null;
   skeleton: SkeletonTask[];
   liveTodos: Todo[];

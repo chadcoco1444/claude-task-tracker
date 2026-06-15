@@ -32,14 +32,19 @@ export function renderDashboardHtml(state: State, options: ViewOptions): string 
   const groups = buildGroups(state, options);
   const body = groups.length === 0
     ? '<p class="empty">No active sessions.</p>'
-    : groups.map((g) => `
-        <h3>${esc(g.isCurrentWindow ? `${g.label} (this window)` : g.label)}</h3>
-        ${g.features.map(card).join('')}
+    : groups.map((rg) => `
+        <h3>${esc(rg.isCurrentWindow ? `${rg.label} (this window)` : rg.label)}</h3>
+        ${rg.features.map(card).join('')}
+        ${rg.worktrees.map((wt) => `
+          <h4>${esc(wt.name)}</h4>
+          ${wt.features.map(card).join('')}
+        `).join('')}
       `).join('');
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
     body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 6px 8px; font-size: 12px; }
     h3 { font-size: 11px; text-transform: uppercase; opacity: .7; margin: 12px 0 4px; }
+    h4 { font-size: 10px; text-transform: uppercase; opacity: .55; margin: 6px 0 2px 12px; }
     .card { display: flex; align-items: center; gap: 8px; padding: 4px 2px; }
     .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
     .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { relativeTime, groupOf, buildGroups, featureCounts, isVisible } from '../src/viewModel';
+import { relativeTime, buildGroups, featureCounts, isVisible, locate } from '../src/viewModel';
 import { reduce } from '../src/reducer';
 import { TrackerEvent, ViewOptions } from '../src/types';
 
@@ -24,24 +24,6 @@ describe('relativeTime', () => {
   });
 });
 
-describe('groupOf', () => {
-  const folders = ['c:\\ws\\claude-task-tracker'];
-
-  it('maps a cwd inside an open folder to the current window', () => {
-    const g = groupOf('c:\\ws\\claude-task-tracker\\src', folders);
-    expect(g).toEqual({ key: 'c:\\ws\\claude-task-tracker', label: 'claude-task-tracker', isCurrentWindow: true });
-  });
-
-  it('maps an outside cwd to its own group', () => {
-    const g = groupOf('c:\\ws\\TradeMatrix', folders);
-    expect(g.isCurrentWindow).toBe(false);
-    expect(g.label).toBe('TradeMatrix');
-  });
-
-  it('maps a missing cwd to the Unknown group', () => {
-    expect(groupOf(null, folders)).toEqual({ key: '', label: 'Unknown (no cwd)', isCurrentWindow: false });
-  });
-});
 
 describe('featureCounts', () => {
   it('counts live todos, falling back to skeleton size', () => {
@@ -84,24 +66,55 @@ describe('isVisible', () => {
 });
 
 describe('buildGroups', () => {
-  it('groups by workspace, pins the current window first, and disambiguates collisions', () => {
+  it('nests worktrees under their repo, pins current window, disambiguates per list', () => {
+    const MIN = 60_000;
     const state = reduce([
-      { t: 'todo_update', ts: 1 * MINUTE, session: 'aaa11111-x', cwd: 'c:/ws/proj',
-        todos: [{ text: 'a', status: 'completed' }] },
-      { t: 'plan_detected', ts: 1 * MINUTE, session: 'aaa11111-x', plan: 'c:/ws/proj/p.md', title: 'Plan', tasks: [] },
-      { t: 'plan_detected', ts: 5 * MINUTE, session: 'bbb22222-y', plan: 'c:/ws/proj/p.md', title: 'Plan', tasks: [{ id: 'T1', text: 'a' }] },
-      { t: 'todo_update', ts: 5 * MINUTE, session: 'bbb22222-y', cwd: 'c:/ws/proj', todos: [] },
-      { t: 'todo_update', ts: 2 * MINUTE, session: 'ccc33333-z', cwd: 'c:/ws/Other',
+      { t: 'plan_detected', ts: 1 * MIN, session: 'aaa11111-x', plan: 'c:/ws/proj/p.md', title: 'Plan', tasks: [] },
+      { t: 'todo_update', ts: 1 * MIN, session: 'aaa11111-x', cwd: 'c:/ws/proj', todos: [{ text: 'a', status: 'completed' }] },
+      { t: 'plan_detected', ts: 2 * MIN, session: 'bbb22222-y', plan: 'c:/ws/proj/p.md', title: 'Plan', tasks: [{ id: 'T1', text: 'a' }] },
+      { t: 'todo_update', ts: 2 * MIN, session: 'bbb22222-y', cwd: 'c:/ws/proj', todos: [] },
+      { t: 'todo_update', ts: 3 * MIN, session: 'ccc33333-z', cwd: 'c:/ws/proj/.worktrees/feat',
         todos: [{ text: 'x', status: 'in_progress' }] },
     ] as TrackerEvent[]);
 
-    const groups = buildGroups(state, opts({ now: 6 * MINUTE, workspaceFolders: ['c:/ws/proj'] }));
+    const groups = buildGroups(state, opts({ now: 4 * MIN, workspaceFolders: ['c:/ws/proj'] }));
 
-    expect(groups[0].label).toBe('proj');
-    expect(groups[0].isCurrentWindow).toBe(true);
-    const labels = groups[0].features.map((fv) => fv.label).sort();
-    // both colliding features get a stable shortId suffix (symmetric), and they are distinct
-    expect(labels).toEqual(['Plan · aaa11111', 'Plan · bbb22222']);
-    expect(groups.some((g) => g.label === 'Other' && !g.isCurrentWindow)).toBe(true);
+    expect(groups).toHaveLength(1);
+    const repo = groups[0];
+    expect(repo.label).toBe('proj');
+    expect(repo.isCurrentWindow).toBe(true);
+    expect(repo.features.map((f) => f.label).sort()).toEqual(['Plan · aaa11111', 'Plan · bbb22222']);
+    expect(repo.worktrees).toHaveLength(1);
+    expect(repo.worktrees[0].name).toBe('feat');
+    expect(repo.worktrees[0].features[0].feature.session).toBe('ccc33333-z');
+  });
+});
+
+describe('locate', () => {
+  const folders = ['c:\\ws\\claude-task-tracker'];
+
+  it('splits a worktree path into repo + worktree, keeping original case', () => {
+    const l = locate('C:\\Users\\me\\TradeMatrix\\.worktrees\\sc-declutter', folders);
+    expect(l.repoLabel).toBe('TradeMatrix');
+    expect(l.worktree).toBe('sc-declutter');
+    expect(l.isCurrentWindow).toBe(false);
+  });
+
+  it('treats a normal repo as worktree=null', () => {
+    const l = locate('c:\\ws\\claude-task-tracker\\src', folders);
+    expect(l.repoLabel).toBe('claude-task-tracker');
+    expect(l.worktree).toBeNull();
+    expect(l.isCurrentWindow).toBe(true);
+  });
+
+  it('flags a worktree opened as the window folder as current window', () => {
+    const l = locate('c:\\r\\Proj\\.worktrees\\feat', ['c:\\r\\Proj\\.worktrees\\feat']);
+    expect(l.worktree).toBe('feat');
+    expect(l.repoLabel).toBe('Proj');
+    expect(l.isCurrentWindow).toBe(true);
+  });
+
+  it('maps a missing cwd to Unknown', () => {
+    expect(locate(null, folders)).toEqual({ repoKey: '', repoLabel: 'Unknown (no cwd)', worktree: null, isCurrentWindow: false });
   });
 });

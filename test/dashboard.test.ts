@@ -30,4 +30,15 @@ describe('renderDashboardHtml', () => {
     ] as TrackerEvent[]);
     expect(renderDashboardHtml(state, opts)).not.toContain('<script>x</script>');
   });
+
+  it('renders a worktree as an h4 sub-header under the repo h3', () => {
+    const state = reduce([
+      { t: 'todo_update', ts: 2, session: 's1', cwd: 'c:/ws/proj/.worktrees/feat', todos: [
+        { text: 'a', status: 'in_progress' },
+      ] },
+    ] as TrackerEvent[]);
+    const html = renderDashboardHtml(state, { now: 1000, workspaceFolders: ['c:/ws/proj'], hideDoneAfterMinutes: 0, dismissed: new Set() });
+    expect(html).toContain('<h3>proj (this window)</h3>');
+    expect(html).toContain('<h4>feat</h4>');
+  });
 });

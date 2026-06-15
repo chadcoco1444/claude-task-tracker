@@ -1,11 +1,11 @@
 import { State, ViewOptions } from './types';
-import { featureCounts, groupOf, relativeTime } from './viewModel';
+import { featureCounts, locate, relativeTime } from './viewModel';
 
 type StatusOptions = Pick<ViewOptions, 'now' | 'workspaceFolders'>;
 
 export function summarize(state: State, options: StatusOptions): string {
   const inWin = state.features.filter(
-    (f) => groupOf(f.cwd, options.workspaceFolders).isCurrentWindow,
+    (f) => locate(f.cwd, options.workspaceFolders).isCurrentWindow,
   );
   if (inWin.length === 0) {
     return '';

@@ -25,10 +25,6 @@ export function relativeTime(now: number, ts: number): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-function norm(p: string): string {
-  return p.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
-}
-
 export interface Location {
   repoKey: string;
   repoLabel: string;

@@ -1,12 +1,59 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { TrackerStore } from './store';
 import { TrackerTreeProvider } from './treeProvider';
 import { createStatusBar } from './statusBar';
 import { DashboardProvider } from './dashboard';
 import { eventLogPath } from './paths';
 import { TreeNode, ViewOptions } from './types';
+import { installHooks, uninstallHooks } from './hookInstaller';
 
 const DISMISSED_KEY = 'claudeTaskTracker.dismissed';
+const CONSENT_KEY = 'claudeTaskTracker.hooksConsent'; // 'granted' | 'declined' | undefined
+
+function hookCommand(context: vscode.ExtensionContext): string {
+  return `node "${path.join(context.extensionPath, 'dist', 'hook.js')}"`;
+}
+
+function runInstall(context: vscode.ExtensionContext): void {
+  try {
+    const { changed } = installHooks(hookCommand(context));
+    if (changed) {
+      vscode.window.showInformationMessage('Claude Task Tracker: Claude Code hooks installed.');
+    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    vscode.window.showWarningMessage(`Claude Task Tracker: could not update ~/.claude/settings.json (${msg}).`);
+  }
+}
+
+async function maybeAutoInstallHooks(context: vscode.ExtensionContext): Promise<void> {
+  const enabled = vscode.workspace
+    .getConfiguration('claudeTaskTracker')
+    .get<boolean>('autoInstallHooks', true);
+  if (!enabled) return;
+
+  const consent = context.globalState.get<string>(CONSENT_KEY);
+  if (consent === 'declined') return;
+  if (consent === 'granted') {
+    runInstall(context);
+    return;
+  }
+
+  const choice = await vscode.window.showInformationMessage(
+    'Claude Task Tracker needs to add hooks to ~/.claude/settings.json so it can see your Claude Code sessions. Install them now?',
+    'Install',
+    'Not now',
+    "Don't ask again",
+  );
+  if (choice === 'Install') {
+    await context.globalState.update(CONSENT_KEY, 'granted');
+    runInstall(context);
+  } else if (choice === "Don't ask again") {
+    await context.globalState.update(CONSENT_KEY, 'declined');
+  }
+  // 'Not now' or dismissed: leave consent undefined so we ask again next session.
+}
 
 export function activate(context: vscode.ExtensionContext): void {
   const store = new TrackerStore(eventLogPath(), () =>
@@ -82,6 +129,20 @@ export function activate(context: vscode.ExtensionContext): void {
       persistDismissed();
       refreshAll();
     }),
+    vscode.commands.registerCommand('claudeTaskTracker.installHooks', async () => {
+      await context.globalState.update(CONSENT_KEY, 'granted');
+      runInstall(context);
+    }),
+    vscode.commands.registerCommand('claudeTaskTracker.uninstallHooks', () => {
+      try {
+        uninstallHooks();
+        context.globalState.update(CONSENT_KEY, 'declined');
+        vscode.window.showInformationMessage('Claude Task Tracker: Claude Code hooks removed.');
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        vscode.window.showWarningMessage(`Claude Task Tracker: could not update ~/.claude/settings.json (${msg}).`);
+      }
+    }),
     { dispose: () => { clearInterval(timer); store.dispose(); } },
   );
 
@@ -89,6 +150,7 @@ export function activate(context: vscode.ExtensionContext): void {
     pruneDismissed();
     refreshAll();
   });
+  void maybeAutoInstallHooks(context);
   store.start();
 }
 

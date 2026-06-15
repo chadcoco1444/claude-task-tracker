@@ -18,13 +18,26 @@
     },
     "views": {
       "claudeTaskTracker": [
-        { "id": "claudeTaskTracker.view", "name": "Tasks & Subagents" }
+        { "id": "claudeTaskTracker.view", "name": "Tasks & Subagents" },
+        { "id": "claudeTaskTracker.dashboard", "name": "Dashboard", "type": "webview" }
       ]
     },
     "commands": [
       { "command": "claudeTaskTracker.refresh", "title": "Tracker: Refresh" },
-      { "command": "claudeTaskTracker.focus", "title": "Tracker: Focus" }
-    ]
+      { "command": "claudeTaskTracker.focus", "title": "Tracker: Focus" },
+      { "command": "claudeTaskTracker.clearCompleted", "title": "Tracker: Clear completed" }
+    ],
+    "configuration": {
+      "title": "Claude Task Tracker",
+      "properties": {
+        "claudeTaskTracker.hideDoneAfterMinutes": {
+          "type": "number",
+          "default": 30,
+          "minimum": 0,
+          "description": "Hide a completed feature this many minutes after it finishes (0 = never hide)."
+        }
+      }
+    }
   },
   "scripts": {
     "build": "node esbuild.js",

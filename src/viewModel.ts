@@ -24,3 +24,27 @@ export function relativeTime(now: number, ts: number): string {
   }
   return `${Math.floor(h / 24)}d ago`;
 }
+
+function norm(p: string): string {
+  return p.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+}
+
+export interface Group {
+  key: string;
+  label: string;
+  isCurrentWindow: boolean;
+}
+
+export function groupOf(cwd: string | null, workspaceFolders: string[]): Group {
+  if (!cwd) {
+    return { key: '', label: 'Unknown (no cwd)', isCurrentWindow: false };
+  }
+  const c = norm(cwd);
+  for (const folder of workspaceFolders) {
+    const f = norm(folder);
+    if (c === f || c.startsWith(f + '/')) {
+      return { key: folder, label: basename(folder), isCurrentWindow: true };
+    }
+  }
+  return { key: cwd, label: basename(cwd), isCurrentWindow: false };
+}

@@ -25,8 +25,16 @@
     "commands": [
       { "command": "claudeTaskTracker.refresh", "title": "Tracker: Refresh" },
       { "command": "claudeTaskTracker.focus", "title": "Tracker: Focus" },
-      { "command": "claudeTaskTracker.clearInactive", "title": "Tracker: Clear inactive" }
+      { "command": "claudeTaskTracker.clearInactive", "title": "Tracker: Clear inactive" },
+      { "command": "claudeTaskTracker.dismiss", "title": "Tracker: Dismiss", "icon": "$(close)" },
+      { "command": "claudeTaskTracker.resetDismissed", "title": "Tracker: Reset dismissed" }
     ],
+    "menus": {
+      "view/item/context": [
+        { "command": "claudeTaskTracker.dismiss", "when": "view == claudeTaskTracker.view && viewItem == feature", "group": "inline" },
+        { "command": "claudeTaskTracker.dismiss", "when": "view == claudeTaskTracker.view && viewItem == feature", "group": "9_dismiss" }
+      ]
+    },
     "configuration": {
       "title": "Claude Task Tracker",
       "properties": {

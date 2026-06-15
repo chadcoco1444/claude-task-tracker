@@ -17,4 +17,4 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
-      - run: npx vsce package --no-dependencies
+      - run: npx vsce package --no-dependencies -o claude-task-tracker.vsix

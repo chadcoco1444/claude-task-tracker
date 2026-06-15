@@ -80,6 +80,7 @@ captured: `SessionStart`, `PostToolUse`(TodoWrite | Write | Edit | MultiEdit),
 |---------|---------|---------|
 | `claudeTaskTracker.hideDoneAfterMinutes` | 30 | auto-hide done/ended features after N minutes (0 = never) |
 | `claudeTaskTracker.logRetentionDays` | 14 | compact the event log on startup, dropping events older than N days (0 = keep all) |
+| `claudeTaskTracker.autoInstallHooks` | true | on startup, install/repair the Claude Code hooks in `~/.claude/settings.json` (asks for consent the first time) |
 
 ## Development
 

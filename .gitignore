@@ -1,0 +1,9 @@
+# Brainstorming visual companion artifacts
+.superpowers/
+
+# Node / VSCode extension
+node_modules/
+out/
+dist/
+*.vsix
+.vscode-test/

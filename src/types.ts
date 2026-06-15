@@ -58,3 +58,10 @@ export type TrackerEvent =
   | SubagentStartEvent
   | SubagentStopEvent
   | SessionStopEvent;
+
+export interface ViewOptions {
+  now: number;
+  workspaceFolders: string[];
+  hideDoneAfterMinutes: number;
+  dismissed: ReadonlySet<string>;
+}

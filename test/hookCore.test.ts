@@ -42,6 +42,26 @@ describe('buildEvents', () => {
     expect(buildEvents({ hook_event_name: 'PostToolUse', session_id: 's1', tool_name: 'Read' }, 1, noPlan)).toEqual([]);
     expect(buildEvents({ hook_event_name: 'Stop' }, 1, noPlan)).toEqual([]);
   });
+
+  it('propagates cwd onto todo, subagent, and stop events so a missed SessionStart still labels', () => {
+    const cwd = '/home/u/proj';
+    const todo = buildEvents({ hook_event_name: 'PostToolUse', session_id: 's1', cwd, tool_name: 'TodoWrite', tool_input: { todos: [{ content: 'a', status: 'pending' }] } }, 1, noPlan);
+    expect((todo[0] as { cwd?: string }).cwd).toBe(cwd);
+
+    const task = buildEvents({ hook_event_name: 'PreToolUse', session_id: 's1', cwd, tool_name: 'Task', tool_use_id: 'tu', tool_input: { subagent_type: 'k', description: 'd' } }, 1, noPlan);
+    expect((task[0] as { cwd?: string }).cwd).toBe(cwd);
+
+    const subStop = buildEvents({ hook_event_name: 'SubagentStop', session_id: 's1', cwd }, 1, noPlan);
+    expect((subStop[0] as { cwd?: string }).cwd).toBe(cwd);
+
+    const sessStop = buildEvents({ hook_event_name: 'Stop', session_id: 's1', cwd }, 1, noPlan);
+    expect((sessStop[0] as { cwd?: string }).cwd).toBe(cwd);
+  });
+
+  it('omits cwd when the payload has none (keeps events minimal)', () => {
+    const subStop = buildEvents({ hook_event_name: 'SubagentStop', session_id: 's1' }, 1, noPlan);
+    expect('cwd' in subStop[0]).toBe(false);
+  });
 });
 
 describe('planParse', () => {

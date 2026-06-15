@@ -133,11 +133,15 @@ export function activate(context: vscode.ExtensionContext): void {
       await context.globalState.update(CONSENT_KEY, 'granted');
       runInstall(context);
     }),
-    vscode.commands.registerCommand('claudeTaskTracker.uninstallHooks', () => {
+    vscode.commands.registerCommand('claudeTaskTracker.uninstallHooks', async () => {
       try {
-        uninstallHooks();
-        context.globalState.update(CONSENT_KEY, 'declined');
-        vscode.window.showInformationMessage('Claude Task Tracker: Claude Code hooks removed.');
+        const { changed } = uninstallHooks();
+        await context.globalState.update(CONSENT_KEY, 'declined');
+        vscode.window.showInformationMessage(
+          changed
+            ? 'Claude Task Tracker: Claude Code hooks removed.'
+            : 'Claude Task Tracker: no Claude Code hooks were installed.',
+        );
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         vscode.window.showWarningMessage(`Claude Task Tracker: could not update ~/.claude/settings.json (${msg}).`);

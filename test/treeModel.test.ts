@@ -74,6 +74,16 @@ describe('buildTree', () => {
     expect(wt.icon).toBe('git-branch');
     expect(wt.children![0].kind).toBe('feature');
   });
+
+  it('renders an ended feature with a dim circle-slash icon', () => {
+    const state = reduce([
+      { t: 'todo_update', ts: 1, session: 's1', cwd: 'c:/ws/auth', todos: [{ text: 'a', status: 'completed' }] },
+      { t: 'session_end', ts: 2, session: 's1' },
+    ] as TrackerEvent[]);
+    const feature = find(buildTree(state, opts({ workspaceFolders: ['c:/ws/auth'] })), 'feature')!;
+    expect(feature.icon).toBe('circle-slash');
+    expect(feature.iconColor).toBe('disabledForeground');
+  });
 });
 
 describe('progressBar', () => {

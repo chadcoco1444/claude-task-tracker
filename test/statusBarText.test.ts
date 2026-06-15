@@ -54,4 +54,14 @@ describe('summarize', () => {
     ] as TrackerEvent[]), { now: 1000, workspaceFolders: ['c:/ws/auth'] });
     expect(text).toBe('');
   });
+
+  it('prefers a non-ended feature over an ended one', () => {
+    const text = summarize(reduce([
+      { t: 'todo_update', ts: 1, session: 'e1', cwd: 'c:/ws/auth', todos: [{ text: 'a', status: 'completed' }] },
+      { t: 'session_end', ts: 2, session: 'e1' },
+      { t: 'session_start', ts: 3, session: 'i1', cwd: 'c:/ws/auth' },
+      { t: 'plan_detected', ts: 3, session: 'i1', plan: 'c:/ws/auth/p.md', title: 'Idle One', tasks: [{ id: 'T1', text: 'x' }] },
+    ] as TrackerEvent[]), { now: 4, workspaceFolders: ['c:/ws/auth'] });
+    expect(text).toContain('Idle One');
+  });
 });

@@ -8,11 +8,12 @@ function esc(s: string): string {
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
 }
 
-const PILL: Record<string, string> = { done: 'done', active: 'running', idle: 'idle' };
+const PILL: Record<string, string> = { done: 'done', active: 'running', idle: 'idle', ended: 'ended' };
 const COLOR: Record<string, string> = {
   done: 'var(--vscode-charts-green)',
   active: 'var(--vscode-charts-blue)',
   idle: 'var(--vscode-disabledForeground)',
+  ended: 'var(--vscode-disabledForeground)',
 };
 
 function card(fv: FeatureView): string {

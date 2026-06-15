@@ -11,7 +11,8 @@ export function summarize(state: State, options: StatusOptions): string {
     return '';
   }
   const active = inWin.filter((f) => f.status === 'active');
-  const pool = active.length > 0 ? active : inWin;
+  const live = inWin.filter((f) => f.status !== 'ended');
+  const pool = active.length > 0 ? active : (live.length > 0 ? live : inWin);
   pool.sort((a, b) => b.lastTs - a.lastTs);
   const f = pool[0];
   const { done, total } = featureCounts(f);

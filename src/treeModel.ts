@@ -5,10 +5,12 @@ const FEATURE_COLOR: Record<Feature['status'], string> = {
   done: 'charts.green',
   active: 'charts.blue',
   idle: 'disabledForeground',
+  ended: 'disabledForeground',
 };
 
 function featureIcon(status: Feature['status']): { icon: string; iconColor: string } {
-  return { icon: 'rocket', iconColor: FEATURE_COLOR[status] };
+  const icon = status === 'ended' ? 'circle-slash' : 'rocket';
+  return { icon, iconColor: FEATURE_COLOR[status] };
 }
 
 function todoVisual(status: TodoStatus): { icon: string; iconColor: string } {

@@ -64,10 +64,18 @@ function featureNode(fv: FeatureView): TreeNode {
 }
 
 export function buildTree(state: State, options: ViewOptions): TreeNode[] {
-  return buildGroups(state, options).map((g): TreeNode => ({
+  return buildGroups(state, options).map((rg): TreeNode => ({
     kind: 'group',
-    label: g.isCurrentWindow ? `${g.label} (this window)` : g.label,
+    label: rg.isCurrentWindow ? `${rg.label} (this window)` : rg.label,
     icon: 'folder',
-    children: g.features.map(featureNode),
+    children: [
+      ...rg.features.map(featureNode),
+      ...rg.worktrees.map((wt): TreeNode => ({
+        kind: 'group',
+        label: wt.name,
+        icon: 'git-branch',
+        children: wt.features.map(featureNode),
+      })),
+    ],
   }));
 }

@@ -57,6 +57,23 @@ describe('buildTree', () => {
     const task = feature.children![0];
     expect(task.description).toBe('planned');
   });
+
+  it('renders a worktree as a git-branch subgroup under its repo', () => {
+    const state = reduce([
+      { t: 'todo_update', ts: 2, session: 's1', cwd: 'c:/ws/proj/.worktrees/feat', todos: [
+        { text: 'a', status: 'in_progress' },
+      ] },
+    ] as TrackerEvent[]);
+    const tree = buildTree(state, opts({ workspaceFolders: ['c:/ws/proj'] }));
+    const repo = tree[0];
+    expect(repo.kind).toBe('group');
+    expect(repo.label).toBe('proj (this window)');
+    const wt = repo.children![0];
+    expect(wt.kind).toBe('group');
+    expect(wt.label).toBe('feat');
+    expect(wt.icon).toBe('git-branch');
+    expect(wt.children![0].kind).toBe('feature');
+  });
 });
 
 describe('progressBar', () => {

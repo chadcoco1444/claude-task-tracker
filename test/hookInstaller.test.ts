@@ -79,6 +79,12 @@ describe('removeHooks', () => {
     const emptyHooks = { hooks: {} } as ClaudeSettings;
     expect(removeHooks(emptyHooks)).toBe(emptyHooks);
   });
+
+  it('omits the hooks key entirely when removal leaves no events', () => {
+    const settings = applyHooks({}, CMD);
+    const out = removeHooks(settings);
+    expect('hooks' in out).toBe(false);
+  });
 });
 
 describe('installHooks (filesystem)', () => {
@@ -107,6 +113,12 @@ describe('uninstallHooks (filesystem)', () => {
     const p = tmpSettings('{}');
     installHooks(CMD, p);
     expect(uninstallHooks(p).changed).toBe(true);
-    expect(JSON.parse(fs.readFileSync(p, 'utf8')).hooks.SessionStart).toBeUndefined();
+    expect(JSON.parse(fs.readFileSync(p, 'utf8')).hooks).toBeUndefined();
+  });
+
+  it('reports changed:false and preserves foreign hooks when none are ours', () => {
+    const p = tmpSettings('{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"echo hi"}]}]}}');
+    expect(uninstallHooks(p).changed).toBe(false);
+    expect(JSON.parse(fs.readFileSync(p, 'utf8')).hooks.Stop).toHaveLength(1);
   });
 });

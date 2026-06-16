@@ -62,6 +62,11 @@ export function removeHooks(settings: ClaudeSettings): ClaudeSettings {
     const kept = arr.filter((e) => !isOurEntry(e));
     if (kept.length > 0) hooks[event] = kept;
   }
+  if (Object.keys(hooks).length === 0) {
+    const next = { ...settings };
+    delete next.hooks;
+    return next;
+  }
   return { ...settings, hooks };
 }
 

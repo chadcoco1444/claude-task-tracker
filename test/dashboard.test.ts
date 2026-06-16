@@ -42,6 +42,16 @@ describe('renderDashboardHtml', () => {
     expect(html).toContain('<h4>feat</h4>');
   });
 
+  it('tags each card with its session and wires a right-click dismiss handler', () => {
+    const state = reduce([
+      { t: 'todo_update', ts: 2, session: 's1', cwd: 'c:/ws/auth', todos: [{ text: 'a', status: 'in_progress' }] },
+    ] as TrackerEvent[]);
+    const html = renderDashboardHtml(state, opts);
+    expect(html).toContain('data-session="s1"');
+    expect(html).toContain('contextmenu');
+    expect(html).toContain("type: 'dismiss'");
+  });
+
   it('shows an ended pill for an ended feature', () => {
     const state = reduce([
       { t: 'todo_update', ts: 1, session: 's1', cwd: 'c:/ws/auth', todos: [{ text: 'a', status: 'completed' }] },

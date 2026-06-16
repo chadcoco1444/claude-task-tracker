@@ -63,10 +63,21 @@ export function isVisible(f: Feature, o: ViewOptions): boolean {
   if (o.dismissed.has(f.session)) {
     return false;
   }
-  // Drop "ghost" sessions: ones that ended having only opened a plan, never
-  // recording a single todo_update or subagent. They'd otherwise linger as
-  // empty 0/N duplicates of whichever session actually ran the plan.
-  if (f.status === 'ended' && f.liveTodos.length === 0 && f.subagents.length === 0) {
+  // Drop "ghost" sessions: ones that only opened a plan, never recording a
+  // single todo_update or subagent. They'd otherwise linger as empty 0/N
+  // duplicates of whichever session actually ran the plan. An ended ghost is
+  // hidden immediately; an idle one (never closed) is hidden once it goes
+  // stale, so a freshly-detected plan still previews for the grace window.
+  const noWork = f.liveTodos.length === 0 && f.subagents.length === 0;
+  if (noWork && f.status === 'ended') {
+    return false;
+  }
+  if (
+    noWork &&
+    f.status === 'idle' &&
+    o.hideDoneAfterMinutes > 0 &&
+    o.now - f.lastTs > o.hideDoneAfterMinutes * 60_000
+  ) {
     return false;
   }
   if ((f.status === 'done' || f.status === 'ended') && o.hideDoneAfterMinutes > 0) {

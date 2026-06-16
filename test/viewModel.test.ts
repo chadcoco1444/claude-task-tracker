@@ -86,6 +86,30 @@ describe('isVisible', () => {
     expect(isVisible(ghost, opts({ now: 0, hideDoneAfterMinutes: 0 }))).toBe(false);
   });
 
+  it('hides an idle plan-only session once it goes stale, but keeps a fresh one', () => {
+    const idleGhost = reduce([
+      { t: 'plan_detected', ts: 0, session: 's', plan: '/p.md', title: 'P', tasks: [{ id: 'T1', text: 'a' }] },
+    ] as TrackerEvent[]).features[0];
+    expect(idleGhost.status).toBe('idle');
+    expect(isVisible(idleGhost, opts({ now: 20 * MINUTE }))).toBe(true);   // fresh: keep the plan preview
+    expect(isVisible(idleGhost, opts({ now: 40 * MINUTE }))).toBe(false);  // stale: hide the phantom 0/N
+  });
+
+  it('never hides an idle plan-only session when retention is 0', () => {
+    const idleGhost = reduce([
+      { t: 'plan_detected', ts: 0, session: 's', plan: '/p.md', title: 'P', tasks: [{ id: 'T1', text: 'a' }] },
+    ] as TrackerEvent[]).features[0];
+    expect(isVisible(idleGhost, opts({ now: 999 * MINUTE, hideDoneAfterMinutes: 0 }))).toBe(true);
+  });
+
+  it('keeps a stale idle session that has live todos (not a ghost)', () => {
+    const working = reduce([
+      { t: 'todo_update', ts: 0, session: 's', todos: [{ text: 'x', status: 'pending' }] },
+    ] as TrackerEvent[]).features[0];
+    expect(working.status).toBe('idle');
+    expect(isVisible(working, opts({ now: 999 * MINUTE }))).toBe(true);
+  });
+
   it('keeps an ended feature that ran subagents but recorded no live todos', () => {
     const worked = reduce([
       { t: 'subagent_start', ts: 0, session: 's', agent: 'a1', kind: 'reviewer', desc: 'review' },

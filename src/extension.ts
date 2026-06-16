@@ -72,7 +72,11 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   const tree = new TrackerTreeProvider(store, getOptions);
-  const dashboard = new DashboardProvider(store, getOptions);
+  const dashboard = new DashboardProvider(store, getOptions, (session) => {
+    dismissed.add(session);
+    persistDismissed();
+    refreshAll();
+  });
   const statusBar = createStatusBar(store, getOptions);
 
   const refreshAll = () => {

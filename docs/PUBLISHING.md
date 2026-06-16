@@ -15,13 +15,6 @@ account setup and the per-release flow.
 4. Add it as a GitHub repo secret named `VSCE_PAT`
    (Settings → Secrets and variables → Actions).
 
-### Open VSX
-1. Sign in at <https://open-vsx.org> with GitHub.
-2. Sign the Eclipse Foundation Publisher Agreement (Profile → "Publisher Agreement").
-3. Create the namespace: `npx ovsx create-namespace chadcoco1444 -p <your-token>`.
-4. Generate an access token (open-vsx.org → Settings → Access Tokens) and add it
-   as a GitHub repo secret named `OVSX_TOKEN`.
-
 ## Cutting a release
 1. Bump `version` in `package.json` and add a matching `CHANGELOG.md` entry.
 2. Commit, then tag and push:
@@ -29,8 +22,8 @@ account setup and the per-release flow.
    git tag v0.3.0
    git push origin v0.3.0
    ```
-3. The **Release** workflow builds, tests, packages, publishes to both
-   marketplaces, and attaches the `.vsix` to the GitHub Release.
+3. The **Release** workflow builds, tests, packages, publishes to the VS Code
+   Marketplace, and attaches the `.vsix` to the GitHub Release.
 
 ## First-release validation (optional)
 Before relying on CI, publish once locally to confirm your tokens work:
@@ -38,5 +31,4 @@ Before relying on CI, publish once locally to confirm your tokens work:
 npm run build
 npx vsce package --no-dependencies
 npx vsce publish --no-dependencies -p <VSCE_PAT>
-npx ovsx publish *.vsix -p <OVSX_TOKEN>
 ```

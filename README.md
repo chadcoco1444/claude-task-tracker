@@ -7,9 +7,10 @@ repo and git worktree.
 ## Install
 
 Install **Claude Task Tracker** from the
-[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=chadcoco1444.claude-task-tracker)
-or from [Open VSX](https://open-vsx.org/extension/chadcoco1444/claude-task-tracker)
-(Cursor / Windsurf / VSCodium).
+[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=chadcoco1444.claude-task-tracker).
+Using a VS Code fork (Cursor / Windsurf / VSCodium)? Download the `.vsix` from the
+[latest GitHub Release](https://github.com/chadcoco1444/claude-task-tracker/releases)
+and run *Extensions: Install from VSIX…*.
 
 **Requirements:** [Claude Code](https://www.anthropic.com/claude-code) and Node.js
 on your `PATH`.

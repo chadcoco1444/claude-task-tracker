@@ -2,7 +2,7 @@
 
 ## 0.3.0
 
-- **First marketplace release** (VS Code Marketplace + Open VSX).
+- **First marketplace release** (VS Code Marketplace).
 - **Works out of the box:** the extension now installs/repairs the Claude Code
   hooks in `~/.claude/settings.json` on activation (asks for consent the first
   time; toggle with `claudeTaskTracker.autoInstallHooks`). Commands

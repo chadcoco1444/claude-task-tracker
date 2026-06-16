@@ -4,6 +4,29 @@ A VSCode extension that visualizes Claude Code task progress, subagent
 convergence, and session lifecycle — across one or many windows, grouped by
 repo and git worktree.
 
+## Install
+
+Install **Claude Task Tracker** from the
+[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=chadcoco1444.claude-task-tracker)
+or from [Open VSX](https://open-vsx.org/extension/chadcoco1444/claude-task-tracker)
+(Cursor / Windsurf / VSCodium).
+
+**Requirements:** [Claude Code](https://www.anthropic.com/claude-code) and Node.js
+on your `PATH`.
+
+The first time it activates, the extension asks to add hooks to
+`~/.claude/settings.json` so it can see your Claude Code sessions. Choose
+**Install** to enable tracking. You can change this anytime with the
+`claudeTaskTracker.autoInstallHooks` setting or the
+**Tracker: Install / Remove Claude Code hooks** commands.
+
+## Screenshots
+
+<!-- TODO(maintainer): replace with a real capture of the Tracker panel + Dashboard.
+     Save it to media/screenshot.png and reference it here:
+     ![Claude Task Tracker](media/screenshot.png) -->
+_Screenshot coming soon._
+
 ## Views
 
 In the **Tracker** activity-bar panel:
@@ -57,8 +80,9 @@ captured: `SessionStart`, `PostToolUse`(TodoWrite | Write | Edit | MultiEdit),
 |---------|---------|---------|
 | `claudeTaskTracker.hideDoneAfterMinutes` | 30 | auto-hide done/ended features after N minutes (0 = never) |
 | `claudeTaskTracker.logRetentionDays` | 14 | compact the event log on startup, dropping events older than N days (0 = keep all) |
+| `claudeTaskTracker.autoInstallHooks` | true | on startup, install/repair the Claude Code hooks in `~/.claude/settings.json` (asks for consent the first time) |
 
-## Install & run (development)
+## Development
 
 ```bash
 npm install

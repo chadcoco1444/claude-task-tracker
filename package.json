@@ -2,12 +2,17 @@
   "name": "claude-task-tracker",
   "displayName": "Claude Task Tracker",
   "description": "Visualize Claude Code task progress and subagent convergence.",
-  "version": "0.2.1",
-  "publisher": "local",
+  "version": "0.3.0",
+  "publisher": "chadcoco1444",
+  "icon": "media/icon.png",
+  "galleryBanner": { "color": "#C25A39", "theme": "dark" },
   "engines": { "vscode": "^1.85.0" },
-  "categories": ["Other"],
+  "categories": ["AI", "Visualization", "Other"],
+  "keywords": ["claude", "claude code", "anthropic", "ai", "agent", "subagent", "task", "todo", "tracker", "progress"],
   "license": "MIT",
   "repository": { "type": "git", "url": "https://github.com/chadcoco1444/claude-task-tracker.git" },
+  "bugs": { "url": "https://github.com/chadcoco1444/claude-task-tracker/issues" },
+  "homepage": "https://github.com/chadcoco1444/claude-task-tracker#readme",
   "activationEvents": ["onStartupFinished"],
   "main": "./dist/extension.js",
   "contributes": {
@@ -27,7 +32,9 @@
       { "command": "claudeTaskTracker.focus", "title": "Tracker: Focus" },
       { "command": "claudeTaskTracker.clearInactive", "title": "Tracker: Clear inactive" },
       { "command": "claudeTaskTracker.dismiss", "title": "Tracker: Dismiss", "icon": "$(close)" },
-      { "command": "claudeTaskTracker.resetDismissed", "title": "Tracker: Reset dismissed" }
+      { "command": "claudeTaskTracker.resetDismissed", "title": "Tracker: Reset dismissed" },
+      { "command": "claudeTaskTracker.installHooks", "title": "Tracker: Install Claude Code hooks" },
+      { "command": "claudeTaskTracker.uninstallHooks", "title": "Tracker: Remove Claude Code hooks" }
     ],
     "menus": {
       "view/item/context": [
@@ -49,20 +56,31 @@
           "default": 14,
           "minimum": 0,
           "description": "Compact the tracker event log on startup, dropping events older than this many days (0 = keep everything)."
+        },
+        "claudeTaskTracker.autoInstallHooks": {
+          "type": "boolean",
+          "default": true,
+          "description": "On startup, install/repair the Claude Code hooks in ~/.claude/settings.json that feed this extension (asks for consent the first time)."
         }
       }
     }
   },
   "scripts": {
+    "vscode:prepublish": "npm run build",
     "build": "node esbuild.js",
     "watch": "node esbuild.js --watch",
     "test": "vitest run",
-    "install-hooks": "node scripts/install-hooks.js"
+    "install-hooks": "node scripts/install-hooks.js",
+    "package": "vsce package --no-dependencies -o claude-task-tracker.vsix",
+    "publish:vsce": "vsce publish --no-dependencies --packagePath claude-task-tracker.vsix",
+    "publish:ovsx": "ovsx publish claude-task-tracker.vsix"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.0",
     "esbuild": "^0.20.0",
+    "ovsx": "^0.10.0",
     "typescript": "^5.4.0",
     "vitest": "^1.4.0"
   }

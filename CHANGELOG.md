@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0
+
+- **First marketplace release** (VS Code Marketplace + Open VSX).
+- **Works out of the box:** the extension now installs/repairs the Claude Code
+  hooks in `~/.claude/settings.json` on activation (asks for consent the first
+  time; toggle with `claudeTaskTracker.autoInstallHooks`). Commands
+  `Tracker: Install Claude Code hooks` / `Tracker: Remove Claude Code hooks`
+  give manual control. The hook path self-heals across extension updates.
+- Added extension icon, license, and marketplace metadata.
+
 ## 0.2.1
 
 - **Hide "ghost" sessions:** an ended session that only opened a plan — no

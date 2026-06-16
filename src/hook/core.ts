@@ -55,16 +55,14 @@ export function buildEvents(payload: HookPayload, now: number, planLookup: PlanL
     typeof p === 'string' && /[\\/]docs[\\/]+superpowers[\\/]+plans[\\/].+\.md$/i.test(p);
 
   switch (payload.hook_event_name) {
-    case 'SessionStart': {
-      const events: TrackerEvent[] = [
-        { t: 'session_start', ts: now, session, cwd },
-      ];
-      const plan = cwd ? planLookup(cwd) : null;
-      if (plan) {
-        events.push({ t: 'plan_detected', ts: now, session, plan: plan.plan, title: plan.title, tasks: plan.tasks });
-      }
-      return events;
-    }
+    // SessionStart records only the session. We deliberately do NOT attach a plan
+    // here: a fresh session has written no plan, so the repo's newest plan file is
+    // almost always stale and unrelated — attaching it produced a phantom "0/N"
+    // feature. A plan attaches when the session actually engages with it: a Write/
+    // Edit to the plan file (below) or its first TodoWrite. A resumed session keeps
+    // its plan via the plan_detected already in the log.
+    case 'SessionStart':
+      return [{ t: 'session_start', ts: now, session, cwd }];
     case 'PostToolUse':
       if (payload.tool_name === 'TodoWrite' && Array.isArray(payload.tool_input?.todos)) {
         const todos = payload.tool_input.todos.map((td) => ({

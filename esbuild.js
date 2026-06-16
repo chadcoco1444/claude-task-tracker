@@ -23,14 +23,23 @@ async function run() {
     outfile: 'dist/hook.js',
     format: 'cjs',
   });
+  const installer = await esbuild.context({
+    ...common,
+    entryPoints: ['src/hookInstaller.ts'],
+    outfile: 'dist/hookInstaller.js',
+    format: 'cjs',
+  });
   if (watch) {
     await ext.watch();
     await hook.watch();
+    await installer.watch();
   } else {
     await ext.rebuild();
     await hook.rebuild();
+    await installer.rebuild();
     await ext.dispose();
     await hook.dispose();
+    await installer.dispose();
   }
 }
 

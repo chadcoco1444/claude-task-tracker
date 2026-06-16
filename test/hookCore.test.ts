@@ -4,11 +4,15 @@ import { buildEvents, planParse, HookPayload, PlanInfo } from '../src/hook/core'
 const noPlan = () => null;
 
 describe('buildEvents', () => {
-  it('SessionStart emits session_start, plus plan_detected when a plan is found', () => {
+  // A brand-new session has written no plan, so attaching the repo's newest plan
+  // file on SessionStart wrongly inherits an unrelated, stale plan (the "phantom
+  // 0/N feature" bug). A plan attaches only when the session writes/edits the plan
+  // file or starts TodoWrite — never on start.
+  it('SessionStart emits only session_start, never a stale plan even if one is found', () => {
     const plan: PlanInfo = { plan: '/r/p.md', title: 'T', tasks: [{ id: 'T1', text: 'a' }] };
     const payload: HookPayload = { hook_event_name: 'SessionStart', session_id: 's1', cwd: '/r' };
     const events = buildEvents(payload, 10, () => plan);
-    expect(events.map((e) => e.t)).toEqual(['session_start', 'plan_detected']);
+    expect(events).toEqual([{ t: 'session_start', ts: 10, session: 's1', cwd: '/r' }]);
   });
 
   it('TodoWrite PostToolUse maps content -> text', () => {

@@ -2,8 +2,15 @@
 docs/
 src/
 test/
+scripts/
+.github/
+.gitignore
 node_modules/
 esbuild.js
 tsconfig.json
 vitest.config.ts
+package-lock.json
+*.vsix
+.vscode-test/
 **/*.map
+media/icon.svg

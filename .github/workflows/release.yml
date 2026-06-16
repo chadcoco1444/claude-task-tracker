@@ -11,8 +11,8 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: npm
@@ -21,7 +21,7 @@ jobs:
       - run: npm run build
       - run: npx vsce package --no-dependencies -o claude-task-tracker.vsix
       - name: Create GitHub Release with the VSIX
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: claude-task-tracker.vsix
           generate_release_notes: true

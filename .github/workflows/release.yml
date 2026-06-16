@@ -20,9 +20,8 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npx vsce package --no-dependencies -o claude-task-tracker.vsix
-      - name: Publish to VS Code Marketplace
-        run: npx vsce publish --no-dependencies --packagePath claude-task-tracker.vsix -p ${{ secrets.VSCE_PAT }}
-      - name: Attach VSIX to the GitHub Release
+      - name: Create GitHub Release with the VSIX
         uses: softprops/action-gh-release@v2
         with:
           files: claude-task-tracker.vsix
+          generate_release_notes: true

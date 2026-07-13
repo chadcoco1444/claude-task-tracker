@@ -5,6 +5,7 @@ import { TrackerTreeProvider } from './treeProvider';
 import { createStatusBar } from './statusBar';
 import { DashboardProvider } from './dashboard';
 import { eventLogPath } from './paths';
+import { sessionsToClear } from './viewModel';
 import { TreeNode, ViewOptions } from './types';
 import { installHooks, uninstallHooks } from './hookInstaller';
 
@@ -113,10 +114,8 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.commands.registerCommand('claudeTaskTracker.refresh', refreshAll),
     vscode.commands.registerCommand('claudeTaskTracker.clearInactive', () => {
-      for (const f of store.state.features) {
-        if (f.status !== 'active') {
-          dismissed.add(f.session);
-        }
+      for (const session of sessionsToClear(store.state.features, Date.now())) {
+        dismissed.add(session);
       }
       persistDismissed();
       refreshAll();

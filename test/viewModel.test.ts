@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { relativeTime, buildGroups, featureCounts, isVisible, locate } from '../src/viewModel';
+import { relativeTime, buildGroups, featureCounts, isVisible, isLiveActive, sessionsToClear, locate } from '../src/viewModel';
 import { reduce } from '../src/reducer';
 import { TrackerEvent, ViewOptions } from '../src/types';
 
@@ -56,12 +56,43 @@ describe('isVisible', () => {
     expect(isVisible(f, opts({ now: 0, dismissed: new Set(['s']) }))).toBe(false);
   });
 
-  it('always shows an active feature, even if dismissed', () => {
+  it('always shows a live active feature, even if dismissed', () => {
     const active = reduce([
       { t: 'todo_update', ts: 0, session: 's', todos: [{ text: 'x', status: 'in_progress' }] },
     ] as TrackerEvent[]).features[0];
     expect(active.status).toBe('active');
-    expect(isVisible(active, opts({ dismissed: new Set(['s']) }))).toBe(true);
+    // Fresh (within the silence window): the pin protects a genuinely running session.
+    expect(isVisible(active, opts({ now: 5 * MINUTE, dismissed: new Set(['s']) }))).toBe(true);
+  });
+
+  it('lets an explicit dismiss hide a stale "active" feature (dead session, stuck in_progress todo)', () => {
+    // A session that died mid-task: last event long ago, one todo stuck in_progress,
+    // no session_end. deriveStatus pins it 'active' forever — but it is not live.
+    const zombie = reduce([
+      { t: 'todo_update', ts: 0, session: 's', todos: [{ text: 'x', status: 'in_progress' }] },
+      { t: 'session_stop', ts: 0, session: 's' },
+    ] as TrackerEvent[]).features[0];
+    expect(zombie.status).toBe('active');
+    // Fresh: still pinned regardless of dismissal.
+    expect(isVisible(zombie, opts({ now: 5 * MINUTE, dismissed: new Set(['s']) }))).toBe(true);
+    // Stale + dismissed (e.g. via Clear inactive): finally hideable.
+    expect(isVisible(zombie, opts({ now: 999 * MINUTE, dismissed: new Set(['s']) }))).toBe(false);
+  });
+
+  it('auto-hides a stale "active" feature past the retention window, keeps it while fresh', () => {
+    const zombie = reduce([
+      { t: 'todo_update', ts: 0, session: 's', todos: [{ text: 'x', status: 'in_progress' }] },
+    ] as TrackerEvent[]).features[0];
+    expect(zombie.status).toBe('active');
+    expect(isVisible(zombie, opts({ now: 5 * MINUTE }))).toBe(true);    // live: shown
+    expect(isVisible(zombie, opts({ now: 999 * MINUTE }))).toBe(false); // long dead: auto-hidden
+  });
+
+  it('never auto-hides a stale "active" feature when retention is 0', () => {
+    const zombie = reduce([
+      { t: 'todo_update', ts: 0, session: 's', todos: [{ text: 'x', status: 'in_progress' }] },
+    ] as TrackerEvent[]).features[0];
+    expect(isVisible(zombie, opts({ now: 999 * MINUTE, hideDoneAfterMinutes: 0 }))).toBe(true);
   });
 
   it('hides an ended feature past the retention window, shows it within', () => {
@@ -117,6 +148,45 @@ describe('isVisible', () => {
     ] as TrackerEvent[]).features[0];
     expect(worked.status).toBe('ended');
     expect(isVisible(worked, opts({ now: 0 }))).toBe(true);   // within retention, did work
+  });
+});
+
+describe('isLiveActive', () => {
+  const activeAt = (ts: number) => reduce([
+    { t: 'todo_update', ts, session: 's', todos: [{ text: 'x', status: 'in_progress' }] },
+  ] as TrackerEvent[]).features[0];
+
+  it('is true for an active feature that emitted an event recently', () => {
+    expect(isLiveActive(activeAt(0), 5 * MIN)).toBe(true);
+  });
+
+  it('is false once an active feature has gone silent past the window', () => {
+    expect(isLiveActive(activeAt(0), 999 * MIN)).toBe(false);
+  });
+
+  it('is false for a non-active feature no matter how recent', () => {
+    const done = reduce([
+      { t: 'todo_update', ts: 0, session: 's', todos: [{ text: 'x', status: 'completed' }] },
+      { t: 'session_stop', ts: 0, session: 's' },
+    ] as TrackerEvent[]).features[0];
+    expect(done.status).toBe('done');
+    expect(isLiveActive(done, 0)).toBe(false);
+  });
+});
+
+describe('sessionsToClear', () => {
+  it('returns every session except the ones that are live-active', () => {
+    const state = reduce([
+      // live active: fresh in_progress todo
+      { t: 'todo_update', ts: 100 * MIN, session: 'live', todos: [{ text: 'x', status: 'in_progress' }] },
+      // stale active: in_progress but long silent (dead /loop, never ended)
+      { t: 'todo_update', ts: 0, session: 'zombie', todos: [{ text: 'x', status: 'in_progress' }] },
+      // plain done
+      { t: 'todo_update', ts: 0, session: 'done', todos: [{ text: 'x', status: 'completed' }] },
+      { t: 'session_stop', ts: 0, session: 'done' },
+    ] as TrackerEvent[]);
+    const cleared = sessionsToClear(state.features, 105 * MIN).sort();
+    expect(cleared).toEqual(['done', 'zombie']);
   });
 });
 

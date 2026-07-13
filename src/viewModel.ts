@@ -56,8 +56,31 @@ export function featureCounts(f: Feature): { done: number; total: number } {
   return { done, total };
 }
 
+// An "active" feature (in-progress todo or running subagent) counts as *live*
+// only while it keeps emitting events. A session that dies mid-task — leaving a
+// stuck in_progress todo and never firing SessionEnd — otherwise derives as
+// 'active' forever (see reducer.deriveStatus): pinned visible and immune to both
+// Clear inactive and Dismiss. Past this silence window we treat such a feature as
+// a dead session, not work in flight. A genuinely running session refreshes lastTs
+// every turn (the Stop hook) and on every subagent dispatch; 60 minutes leaves
+// ample headroom for one long-running subagent to finish before we call it dead.
+export const ACTIVE_SILENCE_MS = 60 * 60_000;
+
+export function isLiveActive(f: Feature, now: number): boolean {
+  return f.status === 'active' && now - f.lastTs <= ACTIVE_SILENCE_MS;
+}
+
+// The sessions Clear inactive should dismiss: everything except genuinely live
+// sessions — which includes stale 'active' zombies that never terminated cleanly.
+export function sessionsToClear(features: Feature[], now: number): string[] {
+  return features.filter((f) => !isLiveActive(f, now)).map((f) => f.session);
+}
+
 export function isVisible(f: Feature, o: ViewOptions): boolean {
-  if (f.status === 'active') {
+  // A genuinely live session is always shown, even if dismissed — never hide work
+  // in flight. A stale 'active' feature falls through to the rules below, so an
+  // explicit dismissal can hide it and retention can eventually auto-hide it.
+  if (isLiveActive(f, o.now)) {
     return true;
   }
   if (o.dismissed.has(f.session)) {
@@ -80,10 +103,15 @@ export function isVisible(f: Feature, o: ViewOptions): boolean {
   ) {
     return false;
   }
-  if ((f.status === 'done' || f.status === 'ended') && o.hideDoneAfterMinutes > 0) {
-    if (o.now - f.lastTs > o.hideDoneAfterMinutes * 60_000) {
-      return false;
-    }
+  // Auto-hide finished features past the retention window — and stale 'active'
+  // ones too (dead sessions, no longer live per the check above), so a zombie
+  // disappears on its own instead of pinning the panel forever.
+  if (
+    (f.status === 'done' || f.status === 'ended' || f.status === 'active') &&
+    o.hideDoneAfterMinutes > 0 &&
+    o.now - f.lastTs > o.hideDoneAfterMinutes * 60_000
+  ) {
+    return false;
   }
   return true;
 }

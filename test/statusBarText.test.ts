@@ -55,6 +55,19 @@ describe('summarize', () => {
     expect(text).toBe('');
   });
 
+  it('does not headline a stale "active" feature as running', () => {
+    // Dead session: in_progress todo, session stopped, but silent for ~an hour.
+    const text = summarize(reduce([
+      { t: 'todo_update', ts: 1, session: 's1', cwd: 'c:/ws/auth', todos: [
+        { text: 'a', status: 'completed' },
+        { text: 'b', status: 'in_progress' },
+      ] },
+      { t: 'session_stop', ts: 2, session: 's1' },
+    ] as TrackerEvent[]), { now: 2 * 60 * 60_000, workspaceFolders: ['c:/ws/auth'] });
+    expect(text).toContain('auth 1/2');
+    expect(text).not.toContain('$(sync~spin)'); // not the live "running" format
+  });
+
   it('prefers a non-ended feature over an ended one', () => {
     const text = summarize(reduce([
       { t: 'todo_update', ts: 1, session: 'e1', cwd: 'c:/ws/auth', todos: [{ text: 'a', status: 'completed' }] },

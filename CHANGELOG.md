@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.1
+
+- **Fix: `Tracker: Clear inactive` now clears dead "active" sessions.** A session
+  that died mid-task — a stuck `in_progress` todo and no `SessionEnd` — derived as
+  `active` forever, so it stayed pinned in the tree and immune to both Clear
+  inactive and Dismiss until log retention finally pruned it. An `active` feature
+  now counts as *live* only while it keeps emitting events (60-minute window);
+  once silent it can be dismissed, is auto-hidden past the retention window like
+  any finished feature, and no longer headlines the status bar as running.
+  Genuinely running sessions refresh their timestamp every turn, so they are
+  unaffected — this refines the earlier "never hide an active feature" to "never
+  hide a *live* one."
+
 ## 0.3.0
 
 - **First public release** — install the `.vsix` from GitHub Releases (*Extensions: Install from VSIX…*).

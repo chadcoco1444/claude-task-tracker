@@ -11,6 +11,7 @@ tsconfig.json
 vitest.config.ts
 package-lock.json
 *.vsix
+*.code-workspace
 .vscode-test/
 **/*.map
 media/icon.svg

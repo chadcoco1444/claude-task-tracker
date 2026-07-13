@@ -2,7 +2,7 @@
   "name": "claude-task-tracker",
   "displayName": "Claude Task Tracker",
   "description": "Visualize Claude Code task progress and subagent convergence.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "publisher": "chadcoco1444",
   "icon": "media/icon.png",
   "galleryBanner": { "color": "#C25A39", "theme": "dark" },

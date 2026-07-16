@@ -71,7 +71,12 @@ export function reduce(events: TrackerEvent[]): State {
       setLabel(f, basename(e.cwd), 'cwd');
     }
     switch (e.t) {
+      // A resumed session fires SessionStart again under the same id. `ended` is
+      // otherwise a one-way latch, so without lifting it here the revived session
+      // derives 'ended' forever — and, having written no todos yet, is hidden
+      // outright by the ghost rule in viewModel.isVisible.
       case 'session_start':
+        f.ended = false;
         if (e.label) {
           setLabel(f, e.label, 'title');
         }

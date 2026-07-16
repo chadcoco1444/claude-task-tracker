@@ -102,6 +102,28 @@ describe('reduce', () => {
     expect(f.status).toBe('ended');
   });
 
+  it('revives a resumed session: SessionStart lifts the ended latch', () => {
+    const f = reduce([
+      { t: 'todo_update', ts: 1, session: 's1', todos: [{ text: 'x', status: 'in_progress' }] },
+      { t: 'session_end', ts: 2, session: 's1' },
+      // Same session id resumed later — Claude Code fires SessionStart again.
+      { t: 'session_start', ts: 3, session: 's1', cwd: '/a/repo' },
+    ] as TrackerEvent[]).features[0];
+    expect(f.ended).toBe(false);
+    expect(f.status).toBe('active'); // the in_progress todo is live again
+  });
+
+  it('a resumed session with no todos is idle, not ended', () => {
+    const f = reduce([
+      { t: 'session_start', ts: 1, session: 's1', cwd: '/a/repo' },
+      { t: 'session_stop', ts: 2, session: 's1' },
+      { t: 'session_end', ts: 3, session: 's1' },
+      { t: 'session_start', ts: 4, session: 's1', cwd: '/a/repo' },
+    ] as TrackerEvent[]).features[0];
+    expect(f.ended).toBe(false);
+    expect(f.status).toBe('idle');
+  });
+
   it('still derives done when stopped with all todos completed', () => {
     const f = reduce([
       { t: 'todo_update', ts: 1, session: 's1', todos: [{ text: 'x', status: 'completed' }] },

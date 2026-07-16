@@ -117,6 +117,18 @@ describe('isVisible', () => {
     expect(isVisible(ghost, opts({ now: 0, hideDoneAfterMinutes: 0 }))).toBe(false);
   });
 
+  it('shows a resumed session that has no todos yet (not an ended ghost)', () => {
+    // Ended days ago, then resumed under the same id: it is alive again, so the
+    // ghost rule must not hide it just because it has not written a todo yet.
+    const resumed = reduce([
+      { t: 'session_start', ts: 0, session: 's', cwd: '/a/repo' },
+      { t: 'session_end', ts: 0, session: 's' },
+      { t: 'session_start', ts: 0, session: 's', cwd: '/a/repo' },
+    ] as TrackerEvent[]).features[0];
+    expect(resumed.status).toBe('idle');
+    expect(isVisible(resumed, opts({ now: 5 * MINUTE }))).toBe(true);
+  });
+
   it('hides an idle plan-only session once it goes stale, but keeps a fresh one', () => {
     const idleGhost = reduce([
       { t: 'plan_detected', ts: 0, session: 's', plan: '/p.md', title: 'P', tasks: [{ id: 'T1', text: 'a' }] },

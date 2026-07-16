@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.2
+
+- **Fix: a resumed session reappears instead of staying invisible.** `ended` was a
+  one-way latch — `SessionEnd` set it and nothing ever cleared it. Claude Code
+  fires `SessionStart` again under the same session id when a session is resumed,
+  so a revived session kept deriving `ended` and, having written no todos yet, was
+  hidden outright by the ghost rule. Resume a session — after hitting a usage
+  limit, or reopening one days later — and it never showed up again. The latch is
+  now lifted on `SessionStart`; only an explicit new start revives a feature, so
+  genuinely ended sessions stay ended and hidden.
+
 ## 0.3.1
 
 - **Fix: `Tracker: Clear inactive` now clears dead "active" sessions.** A session
